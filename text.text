@@ -1,0 +1,23 @@
+# Django sozlamalari
+SECRET_KEY=your_secret_key_here
+DEBUG=False
+ALLOWED_HOSTS=server_ip,your_domain.com
+
+# Ma'lumotlar bazasi sozlamalari
+DB_ENGINE=django.db.backends.postgresql
+DB_NAME=topinvest
+DB_USER=topinvestuser
+DB_PASSWORD=secure_password_here
+DB_HOST=db
+DB_PORT=5432
+
+# Telegram bot sozlamalari
+BOT_TOKEN=your_bot_token
+CHANNEL_ID=your_channel_id
+API_URL=https://your_domain.com
+
+# Redis sozlamalari
+REDIS_URL=redis://redis:6379/0
+
+# CORS sozlamalari
+CORS_ALLOWED_ORIGINS=https://your_domain.com

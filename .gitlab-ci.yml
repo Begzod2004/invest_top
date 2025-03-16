@@ -1,0 +1,30 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  DOCKER_DRIVER: overlay2
+
+before_script:
+  - docker info
+
+build:
+  stage: build
+  script:
+    - docker build -t myapp:latest .
+
+unit_test:
+  stage: test
+  script:
+    - echo "Running unit tests"
+    - pytest
+
+deploy:
+  stage: deploy
+  script:
+    - echo "Deploying application"
+    - docker-compose up -d
+  environment:
+    name: production
+    url: http://example.com

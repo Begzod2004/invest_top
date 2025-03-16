@@ -1,0 +1,63 @@
+{% extends "admin/change_list.html" %} {% load static %} {% block content %}
+<div
+  style="
+    margin-bottom: 20px;
+    padding: 20px;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  "
+>
+  <h2 style="color: #2c3e50; margin-bottom: 20px">
+    📊 Foydalanuvchilar statistikasi
+  </h2>
+  <canvas id="userStatsChart" style="width: 100%; height: 300px"></canvas>
+</div>
+{{ block.super }}
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+      var ctx = document.getElementById('userStatsChart').getContext('2d');
+      var stats = {{ daily_stats|safe }};
+
+      new Chart(ctx, {
+          type: 'line',
+          data: {
+              labels: stats.labels,
+              datasets: [{
+                  label: 'Yangi foydalanuvchilar',
+                  data: stats.data,
+                  borderColor: '#3498db',
+                  backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                  borderWidth: 2,
+                  fill: true,
+                  tension: 0.4
+              }]
+          },
+          options: {
+              responsive: true,
+              plugins: {
+                  title: {
+                      display: true,
+                      text: 'So\'nggi 7 kundagi yangi foydalanuvchilar',
+                      font: {
+                          size: 16
+                      }
+                  },
+                  legend: {
+                      position: 'bottom'
+                  }
+              },
+              scales: {
+                  y: {
+                      beginAtZero: true,
+                      ticks: {
+                          stepSize: 1
+                      }
+                  }
+              }
+          }
+      });
+  });
+</script>
+{% endblock %}

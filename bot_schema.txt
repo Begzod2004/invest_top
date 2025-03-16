@@ -1,0 +1,11 @@
+bot/
+│── __init__.py
+│── bot.py  # Bot asosiy kodi (aiogram)
+│── handlers.py  # Bot buyruqlari va logikasi
+│── keyboards.py  # Tugmalar (inline va reply)
+│── middleware.py  # Middlewarelar (agar kerak bo‘lsa)
+│── utils.py  # Foydali funksiyalar
+│── config.py  # Bot sozlamalari
+│── management/
+│   └── commands/
+│       └── runbot.py  # Django command sifatida botni ishga tushirish

@@ -1,0 +1,176 @@
+{% extends "admin/base_site.html" %} {% load static %} {% block extrastyle %}
+<style>
+  .stats-card {
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    color: white;
+  }
+  ga shun .bg-primary {
+    background-color: #007bff;
+  }
+  .bg-success {
+    background-color: #28a745;
+  }
+  .bg-info {
+    background-color: #17a2b8;
+  }
+  .stats-number {
+    font-size: 24px;
+    font-weight: bold;
+  }
+  .stats-label {
+    font-size: 16px;
+    opacity: 0.9;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="row">
+  <div class="col-md-4">
+    <div class="stats-card bg-primary">
+      <div class="stats-number">{{ total_users }}</div>
+      <div class="stats-label">Jami foydalanuvchilar</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stats-card bg-success">
+      <div class="stats-number">{{ subscribed_users }}</div>
+      <div class="stats-label">Obuna bo'lganlar</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stats-card bg-info">
+      <div class="stats-number">{{ active_users }}</div>
+      <div class="stats-label">Faol foydalanuvchilar</div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">📊 Kunlik statistika</h3>
+      </div>
+      <div class="card-body">
+        <canvas id="usersChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">🏆 Top referrallar</h3>
+      </div>
+      <div class="card-body">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Foydalanuvchi</th>
+              <th>Referrallar</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in top_referrers %}
+            <tr>
+              <td>{{ user.first_name }} {{ user.last_name }}</td>
+              <td>{{ user.ref_count }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="2">Ma'lumot yo'q</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extrajs %}
+<script src="{% static 'js/chart.min.js' %}"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var ctx = document.getElementById("usersChart").getContext("2d");
+    var data = JSON.parse("{{ daily_stats|escapejs }}");
+
+    new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: data.labels,
+        datasets: [
+          {
+            label: "Yangi foydalanuvchilar",
+            data: data.data,
+            borderColor: "#007bff",
+            backgroundColor: "rgba(0, 123, 255, 0.1)",
+            fill: true,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 1 },
+          },
+        },
+      },
+    });
+    function approvePayment(paymentId) {
+      if (!confirm("Do you want to approve this payment?")) {
+        return;
+      }
+
+      fetch(`/admin/payments/payment/approve/${paymentId}/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.status === "success") {
+            alert("✅ " + data.message);
+            location.reload();
+          } else {
+            alert("❌ " + data.message);
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          alert("❌ An error occurred. Please try again.");
+        });
+    }
+
+    function rejectPayment(paymentId) {
+      if (!confirm("Do you want to reject this payment?")) {
+        return;
+      }
+
+      fetch(`/admin/payments/payment/reject/${paymentId}/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.status === "success") {
+            alert("✅ " + data.message);
+            location.reload();
+          } else {
+            alert("❌ " + data.message);
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          alert("❌ An error occurred. Please try again.");
+        });
+    }
+  });
+</script>
+{% endblock %}

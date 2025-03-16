@@ -1,0 +1,27 @@
+version: "3"
+
+services:
+  db:
+    image: postgres:13
+    restart: always
+    env_file: .env
+
+  redis:
+    image: redis:6
+    restart: always
+
+  web:
+    build: .
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./db.sqlite3:/app/db.sqlite3
+      - ./media:/app/media
+      - ./payment_screenshots:/app/payment_screenshots
+    env_file:
+      - .env
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3"
