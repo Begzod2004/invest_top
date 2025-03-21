@@ -55,7 +55,7 @@ INSTALLED_APPS = [
     # Third party apps
     'rest_framework',
     'rest_framework_simplejwt',
-    'drf_yasg',
+    'drf_spectacular',
     'corsheaders',
     
     # Project apps
@@ -174,16 +174,16 @@ CHANNEL_ID = os.getenv('CHANNEL_ID')
 
 # REST Framework settings
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
+    'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
-    ),
-    'DEFAULT_PERMISSION_CLASSES': (
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
-    ),
+    ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
-    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
@@ -309,4 +309,25 @@ JAZZMIN_SETTINGS = {
     "changeform_format": "horizontal_tabs",
     "changeform_format_overrides": {"auth.user": "collapsible", "auth.group": "vertical_tabs"},
     "language_chooser": False,
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Top Invest API',
+    'DESCRIPTION': 'Top Invest API Documentation',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'CONTACT': {
+        'name': 'Admin',
+        'email': 'admin@topinvest.uz'
+    },
+    'LICENSE': {
+        'name': 'Commercial License',
+    },
+    'TAGS': [
+        {'name': 'users', 'description': 'User management'},
+        {'name': 'payments', 'description': 'Payment operations'},
+        {'name': 'subscriptions', 'description': 'Subscription management'},
+        {'name': 'signals', 'description': 'Trading signals'},
+        {'name': 'dashboard', 'description': 'Admin dashboard'},
+    ],
 }
