@@ -14,55 +14,37 @@ function getCookie(name) {
 }
 
 function approvePayment(paymentId) {
-    if (!confirm('Ushbu to\'lovni tasdiqlashni xohlaysizmi?')) {
-        return;
+    if (confirm('To\'lovni tasdiqlashni xohlaysizmi?')) {
+        updatePaymentStatus(paymentId, 'COMPLETED');
     }
-
-    fetch(`/admin/payments/payment/${paymentId}/approve/`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
-            alert('✅ ' + data.message);
-            location.reload();
-        } else {
-            alert('❌ ' + data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('❌ Xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.');
-    });
 }
 
 function rejectPayment(paymentId) {
-    if (!confirm('Ushbu to\'lovni rad etishni xohlaysizmi?')) {
-        return;
+    if (confirm('To\'lovni rad etishni xohlaysizmi?')) {
+        updatePaymentStatus(paymentId, 'REJECTED');
     }
+}
 
-    fetch(`/admin/payments/payment/${paymentId}/reject/`, {
+function updatePaymentStatus(paymentId, status) {
+    const csrftoken = getCookie('csrftoken');
+    
+    fetch(`/api/payments/${paymentId}/update-status/`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')
-        }
+            'X-CSRFToken': csrftoken,
+        },
+        body: JSON.stringify({ status: status })
     })
     .then(response => response.json())
     .then(data => {
-        if (data.status === 'success') {
-            alert('✅ ' + data.message);
+        if (data.success) {
             location.reload();
         } else {
-            alert('❌ ' + data.message);
+            alert('Xatolik yuz berdi: ' + data.message);
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        alert('❌ Xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.');
+        alert('Xatolik yuz berdi: ' + error);
     });
 } 

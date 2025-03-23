@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   web:
     build: .
@@ -5,12 +7,31 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./db.sqlite3:/app/db.sqlite3
+      - .:/app
+      - ./static:/app/static
       - ./media:/app/media
-      - ./payment_screenshots:/app/payment_screenshots
-    env_file:
-      - .env
+      - ./staticfiles:/app/staticfiles
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - DEBUG=True
+      - SECRET_KEY=django-insecure-7h!cyyi@x*e_2+&8efckt_8^jjbq2ugszp6c@239+3&coqi1up
+      - BOT_TOKEN=6080036337:AAFlFZFp4YL-RnSu2YoLWZRIAS6FKX6CGbc
+      - CHANNEL_ID=-1001953539625
     command: >
       sh -c "python manage.py migrate &&
              python manage.py collectstatic --noinput &&
              gunicorn config.wsgi:application --bind 0.0.0.0:8000"
+
+  bot:
+    build: .
+    restart: always
+    volumes:
+      - .:/app
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - DEBUG=True
+      - BOT_TOKEN=6080036337:AAFlFZFp4YL-RnSu2YoLWZRIAS6FKX6CGbc
+      - CHANNEL_ID=-1001953539625
+    command: python manage.py runbot
+    depends_on:
+      - web

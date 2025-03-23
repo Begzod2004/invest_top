@@ -26,19 +26,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-key')
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-7h!cyyi@x*e_2+&8efckt_8^jjbq2ugszp6c@239+3&coqi1up')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '[::1]',  # IPv6 localhost
+    'top-invest-webapp.vercel.app',
+    '*'  # Development uchun
+]
 
-# For security in production
-SECURE_SSL_REDIRECT = not DEBUG
-SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SECURE = not DEBUG
-SECURE_BROWSER_XSS_FILTER = not DEBUG
-SECURE_CONTENT_TYPE_NOSNIFF = not DEBUG
+# Security setting
 
 
 # Application definition
@@ -57,16 +58,17 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'drf_spectacular',
     'corsheaders',
+    'django_filters',
     
     # Project apps
-    'users',
-    'instruments',
-    'payments',
-    'reviews',
-    'signals',
-    'subscriptions',
-    'invest_bot',
-    'dashboard',
+    'apps.users',
+    'apps.instruments',
+    'apps.payments',
+    'apps.reviews',
+    'apps.signals',
+    'apps.subscriptions',
+    'apps.invest_bot',
+    'apps.dashboard',
 ]
 
 MIDDLEWARE = [
@@ -108,11 +110,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.sqlite3'),
-        'NAME': os.getenv('DB_NAME', BASE_DIR / 'db.sqlite3'),
-        'USER': os.getenv('DB_USER', ''),
-        'PASSWORD': os.getenv('DB_PASSWORD', ''),
-        'HOST': os.getenv('DB_HOST', ''),
-        'PORT': os.getenv('DB_PORT', ''),
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
 
@@ -168,12 +166,21 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Custom user model
+AUTH_USER_MODEL = 'users.User'
+
 # Telegram Bot settings
 BOT_TOKEN = os.getenv('BOT_TOKEN')
-CHANNEL_ID = os.getenv('CHANNEL_ID')
+try:
+    CHANNEL_ID = int(os.getenv('CHANNEL_ID', '0'))
+except ValueError:
+    raise ValueError("CHANNEL_ID must be a number")
+
+WEB_APP_URL = os.getenv('WEB_APP_URL', 'https://top-invest-webapp.vercel.app')
 
 # REST Framework settings
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
@@ -183,7 +190,6 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
@@ -193,15 +199,6 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.MultiPartParser',
     ),
-    'DEFAULT_THROTTLE_CLASSES': (
-        'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle',
-    ),
-    'DEFAULT_THROTTLE_RATES': {
-        'anon': '100/day',
-        'user': '1000/day',
-    },
-    'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
 }
 
 # JWT Settings
@@ -220,40 +217,45 @@ SIMPLE_JWT = {
     'TOKEN_TYPE_CLAIM': 'token_type',
 }
 
-# Swagger settings
-SWAGGER_SETTINGS = {
-    'SECURITY_DEFINITIONS': {
-        'Bearer': {
-            'type': 'apiKey',
-            'name': 'Authorization',
-            'in': 'header',
-            'description': 'JWT Authorization header using the Bearer scheme. Example: "Bearer {token}"'
-        }
-    },
-    'USE_SESSION_AUTH': False,
-    'JSON_EDITOR': True,
-    'VALIDATOR_URL': None,
-    'DEFAULT_MODEL_RENDERING': 'example',
-    'OPERATIONS_SORTER': 'alpha',
-    'TAGS_SORTER': 'alpha',
-    'DOC_EXPANSION': 'list',
-    'DEEP_LINKING': True,
-    'SHOW_EXTENSIONS': True,
-    'DEFAULT_GENERATOR_CLASS': 'drf_yasg.generators.OpenAPISchemaGenerator',
-    'DEFAULT_AUTO_SCHEMA_CLASS': 'drf_yasg.inspectors.SwaggerAutoSchema',
-}
-
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = DEBUG
-CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000').split(',')
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001',
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+    'https://top-invest-webapp.vercel.app'
+]
+
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+    'OPTIONS',
+]
+
+CORS_ALLOW_HEADERS = [
+    'Accept',
+    'Accept-Language',
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'X-CSRFToken',
+]
+
+CORS_EXPOSE_HEADERS = [
+    'Content-Length',
+    'Content-Type',
+]
+
 CORS_ALLOW_CREDENTIALS = True
 
-# Security settings for production
-if not DEBUG:
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+# CORS preflight settings
+CORS_PREFLIGHT_MAX_AGE = 86400  # 24 hours
 
 # Jazzmin settings
 JAZZMIN_SETTINGS = {
@@ -313,21 +315,51 @@ JAZZMIN_SETTINGS = {
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Top Invest API',
-    'DESCRIPTION': 'Top Invest API Documentation',
+    'DESCRIPTION': 'Top Invest platformasi uchun API dokumentatsiya',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
-    'CONTACT': {
-        'name': 'Admin',
-        'email': 'admin@topinvest.uz'
-    },
-    'LICENSE': {
-        'name': 'Commercial License',
-    },
+    
+    # Kategoriyalarni tartiblaymiz
     'TAGS': [
-        {'name': 'users', 'description': 'User management'},
-        {'name': 'payments', 'description': 'Payment operations'},
-        {'name': 'subscriptions', 'description': 'Subscription management'},
-        {'name': 'signals', 'description': 'Trading signals'},
-        {'name': 'dashboard', 'description': 'Admin dashboard'},
+        {'name': 'auth', 'description': 'Autentifikatsiya'},
+        {'name': 'users', 'description': 'Foydalanuvchilar'},
+        {'name': 'users-admin', 'description': 'Foydalanuvchilar (Admin)'},
+        {'name': 'signals', 'description': 'Signallar'},
+        {'name': 'signals-admin', 'description': 'Signallar (Admin)'},
+        {'name': 'payments', 'description': 'To\'lovlar'},
+        {'name': 'payments-admin', 'description': 'To\'lovlar (Admin)'},
+        {'name': 'subscriptions', 'description': 'Obunalar'},
+        {'name': 'subscriptions-admin', 'description': 'Obunalar (Admin)'},
+        {'name': 'reviews', 'description': 'Sharhlar'},
+        {'name': 'reviews-admin', 'description': 'Sharhlar (Admin)'},
     ],
+    
+    # Kategoriyalarni tartiblash
+    'TAG_SORTER': lambda x: {
+        'auth': 0,
+        'users': 1,
+        'users-admin': 2,
+        'signals': 3,
+        'signals-admin': 4,
+        'payments': 5,
+        'payments-admin': 6,
+        'subscriptions': 7,
+        'subscriptions-admin': 8,
+        'reviews': 9,
+        'reviews-admin': 10,
+    }.get(x['name'], 11),
+}
+
+# Session settings
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 1209600  # 2 hafta
+SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+
+# Cache settings
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
 }

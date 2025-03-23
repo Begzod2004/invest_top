@@ -48,3 +48,11 @@ payment_screenshots/
 # OS
 .DS_Store
 Thumbs.db
+
+# Database
+db.sqlite3
+
+# Media and static files
+/media/
+/staticfiles/
+/static/

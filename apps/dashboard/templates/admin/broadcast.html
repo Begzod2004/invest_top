@@ -1,0 +1,115 @@
+{% extends "admin/base_site.html" %} {% load static %} {% block content %}
+<div class="broadcast-container" style="padding: 20px">
+  <!-- Xabar yuborish formasi -->
+  <div
+    style="
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    "
+  >
+    <h2 style="margin-bottom: 20px">📨 Xabar yuborish</h2>
+    <form method="post" action="{% url 'admin:admin-broadcast' %}">
+      {% csrf_token %}
+      <div style="margin-bottom: 20px">
+        <label style="display: block; margin-bottom: 8px"
+          >Qabul qiluvchilar:</label
+        >
+        <select
+          name="recipient_type"
+          style="
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+          "
+        >
+          <option value="all">Barcha foydalanuvchilarga</option>
+          <option value="subscribed">Faqat obuna bo'lganlarga</option>
+          <option value="active">Faol foydalanuvchilarga</option>
+        </select>
+      </div>
+      <div style="margin-bottom: 20px">
+        <label style="display: block; margin-bottom: 8px">Xabar matni:</label>
+        <textarea
+          name="message"
+          rows="5"
+          style="
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+          "
+        ></textarea>
+      </div>
+      <button
+        type="submit"
+        style="
+          background: #3498db;
+          color: white;
+          padding: 12px 24px;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+        "
+      >
+        Xabarni yuborish
+      </button>
+    </form>
+  </div>
+
+  <!-- So'nggi yuborilgan xabarlar -->
+  <div style="background: white; padding: 20px; border-radius: 10px">
+    <h3 style="margin-bottom: 20px">So'nggi yuborilgan xabarlar</h3>
+    <table style="width: 100%; border-collapse: collapse">
+      <thead>
+        <tr style="background: #f8f9fa">
+          <th style="padding: 12px; text-align: left">Xabar</th>
+          <th style="padding: 12px; text-align: center">Qabul qiluvchilar</th>
+          <th style="padding: 12px; text-align: center">Muvaffaqiyatli</th>
+          <th style="padding: 12px; text-align: center">Xatolik</th>
+          <th style="padding: 12px; text-align: right">Sana</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for broadcast in recent_broadcasts %}
+        <tr style="border-bottom: 1px solid #dee2e6">
+          <td style="padding: 12px">
+            {{ broadcast.message|truncatechars:50 }}
+          </td>
+          <td style="padding: 12px; text-align: center">
+            {{ broadcast.get_recipient_type_display }}
+          </td>
+          <td style="padding: 12px; text-align: center; color: #2ecc71">
+            {{ broadcast.success_count }}
+          </td>
+          <td style="padding: 12px; text-align: center; color: #e74c3c">
+            {{ broadcast.error_count }}
+          </td>
+          <td style="padding: 12px; text-align: right">
+            {{ broadcast.created_at|date:"d.m.Y H:i" }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if messages %}
+<div style="position: fixed; top: 20px; right: 20px; z-index: 1000">
+  {% for message in messages %}
+  <div
+    style="background: {% if message.tags == 'success' %}#2ecc71{% else %}#e74c3c{% endif %}; 
+                color: white; 
+                padding: 15px 25px; 
+                border-radius: 5px;
+                margin-bottom: 10px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);"
+  >
+    {{ message }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %} {% endblock %}

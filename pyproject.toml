@@ -1,10 +1,20 @@
 [project]
-name = "top-invest"
+name = "backend"
 version = "0.1.0"
-description = "Add your description here"
+description = "Top Invest backend project"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.8"
 dependencies = [
-    "django>=5.1.7",
-    "pillow>=11.1.0",
+    "django",
+    "django-filter",
+    "djangorestframework",
+    "drf-spectacular",
+    "python-dotenv",
+    "aiogram==2.25.1",
+    "pillow",
+    "whitenoise",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
