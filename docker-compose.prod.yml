@@ -1,57 +1,44 @@
-version: "3.8"
+version: '3.8'
 
 services:
-  db:
-    image: postgres:13
-    restart: always
-    env_file: .env
-
-  redis:
-    image: redis:6
-    restart: always
-
   web:
     build: .
-    restart: always
-    ports:
-      - "8000:8000"
-    volumes:
-      - static_volume:/app/staticfiles
-      - media_volume:/app/media
-      - payment_screenshots:/app/payment_screenshots
-      - sqlite_data:/app/data
-    env_file:
-      - .env
     command: >
       sh -c "python manage.py migrate &&
              python manage.py collectstatic --noinput &&
-             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120"
-
-  nginx:
-    image: nginx:alpine
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
+             gunicorn config.wsgi:application --bind 0.0.0.0:8080"
     volumes:
+      - .:/app
       - static_volume:/app/staticfiles
       - media_volume:/app/media
-      - payment_screenshots:/app/payment_screenshots
-      - ./nginx:/etc/nginx/conf.d
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
+      - sqlite_data:/app/data
+    expose:
+      - 8080
+    env_file:
+      - .env.prod
+
+  bot:
+    build: .
+    command: python manage.py runbot
+    volumes:
+      - .:/app
+      - sqlite_data:/app/data
+    env_file:
+      - .env.prod
     depends_on:
       - web
 
-  certbot:
-    image: certbot/certbot
+  nginx:
+    build: ./nginx
     volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    command: certonly --webroot -w /var/www/certbot --force-renewal --email your@email.com -d yourdomain.com --agree-tos
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    ports:
+      - "8080:80"
+    depends_on:
+      - web
 
 volumes:
   static_volume:
   media_volume:
-  payment_screenshots:
   sqlite_data:

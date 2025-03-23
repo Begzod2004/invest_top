@@ -5,7 +5,7 @@ services:
     build: .
     restart: always
     ports:
-      - "8000:8000"
+      - "8080:8080"
     volumes:
       - .:/app
       - ./static:/app/static
@@ -20,7 +20,7 @@ services:
     command: >
       sh -c "python manage.py migrate &&
              python manage.py collectstatic --noinput &&
-             gunicorn config.wsgi:application --bind 0.0.0.0:8000"
+             gunicorn config.wsgi:application --bind 0.0.0.0:8080"
 
   bot:
     build: .
