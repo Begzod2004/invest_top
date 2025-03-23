@@ -4,6 +4,7 @@ services:
   web:
     build: .
     restart: always
+    user: "${UID}:${GID}"  # Joriy foydalanuvchi ID
     ports:
       - "8080:8080"
     volumes:
