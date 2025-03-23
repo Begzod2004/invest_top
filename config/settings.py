@@ -45,11 +45,11 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
-    'jazzmin',
-    'django.contrib.admin',
-    'django.contrib.auth',
+    'django.contrib.auth',  # Birinchi bo'lishi kerak
     'django.contrib.contenttypes',
     'django.contrib.sessions',
+    'django.contrib.admin',
+    'jazzmin',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
@@ -61,7 +61,7 @@ INSTALLED_APPS = [
     'django_filters',
     
     # Project apps
-    'apps.users',
+    'apps.users',  # Users app ikkinchi bo'lishi kerak
     'apps.instruments',
     'apps.payments',
     'apps.reviews',
