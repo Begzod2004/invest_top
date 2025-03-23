@@ -36,6 +36,6 @@ services:
       - ./staticfiles:/app/staticfiles
       - ./media:/app/media
     ports:
-      - "80:80"  # HTTPS ni o'chirib, faqat HTTP ishlatamiz
+      - "8082:80"
     depends_on:
       - web
