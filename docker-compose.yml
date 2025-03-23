@@ -11,12 +11,8 @@ services:
       - ./static:/app/static
       - ./media:/app/media
       - ./staticfiles:/app/staticfiles
-    environment:
-      - DJANGO_SETTINGS_MODULE=config.settings
-      - DEBUG=True
-      - SECRET_KEY=django-insecure-7h!cyyi@x*e_2+&8efckt_8^jjbq2ugszp6c@239+3&coqi1up
-      - BOT_TOKEN=6080036337:AAFlFZFp4YL-RnSu2YoLWZRIAS6FKX6CGbc
-      - CHANNEL_ID=-1001953539625
+    env_file:
+      - .env
     command: >
       sh -c "python manage.py migrate &&
              python manage.py collectstatic --noinput &&
@@ -27,11 +23,19 @@ services:
     restart: always
     volumes:
       - .:/app
-    environment:
-      - DJANGO_SETTINGS_MODULE=config.settings
-      - DEBUG=True
-      - BOT_TOKEN=6080036337:AAFlFZFp4YL-RnSu2YoLWZRIAS6FKX6CGbc
-      - CHANNEL_ID=-1001953539625
+    env_file:
+      - .env
     command: python manage.py runbot
+    depends_on:
+      - web
+
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - ./staticfiles:/app/staticfiles
+      - ./media:/app/media
+    ports:
+      - "80:80"  # HTTPS ni o'chirib, faqat HTTP ishlatamiz
     depends_on:
       - web

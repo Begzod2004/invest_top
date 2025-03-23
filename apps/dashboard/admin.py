@@ -26,9 +26,37 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 @admin.register(BroadcastMessage)
 class BroadcastMessageAdmin(admin.ModelAdmin):
-    list_display = ('recipient_type', 'success_count', 'error_count', 'created_at')
-    list_filter = ('recipient_type', 'created_at')
-    readonly_fields = ('success_count', 'error_count', 'sent_by', 'created_at')
+    list_display = [
+        'recipient_type',
+        'sent_by',
+        'message',
+        'sent_at',
+        'success_count',
+        'error_count'
+    ]
+    list_filter = [
+        'recipient_type',
+        'sent_at',
+    ]
+    readonly_fields = [
+        'recipient_type',
+        'message',
+        'sent_by',
+        'sent_at',
+        'success_count',
+        'error_count'
+    ]
+    search_fields = ['message']
+    ordering = ['-sent_at']
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 class CustomAdminSite(admin.AdminSite):
     site_title = "Top Invest Admin"
