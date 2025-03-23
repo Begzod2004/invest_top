@@ -8,10 +8,10 @@ services:
       - "8080:8080"
     volumes:
       - .:/app
-      - ./data/db.sqlite3:/app/db.sqlite3
       - ./static:/app/static
       - ./media:/app/media
       - ./staticfiles:/app/staticfiles
+      - ./data:/app/data
     env_file:
       - .env
     command: >
