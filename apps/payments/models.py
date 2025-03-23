@@ -21,9 +21,9 @@ class Payment(models.Model):
         ('CANCELLED', 'Cancelled')
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payments')
-    subscription_plan = models.ForeignKey(SubscriptionPlan, on_delete=models.CASCADE, null=True, blank=True)
-    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    subscription_plan = models.ForeignKey(SubscriptionPlan, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
     payment_type = models.CharField(max_length=10, choices=PAYMENT_TYPES)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
     screenshot = models.ImageField(upload_to='payment_screenshots/', null=True, blank=True)
