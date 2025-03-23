@@ -51,6 +51,11 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractUser):
+    # AbstractUser maydonlari
+    last_login = models.DateTimeField(null=True, blank=True)
+    date_joined = models.DateTimeField(default=timezone.now)
+    
+    # Bizning qo'shimcha maydonlarimiz
     username = models.CharField(max_length=150, unique=True)
     user_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
     telegram_user_id = models.CharField(max_length=100, null=True, blank=True)
@@ -67,7 +72,6 @@ class User(AbstractUser):
     is_superuser = models.BooleanField(default=False)
 
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    date_joined = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
     roles = models.ManyToManyField(Role, related_name='users', blank=True)
