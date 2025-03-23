@@ -21,8 +21,11 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('amount', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('status', models.CharField(choices=[('pending', 'Kutilmoqda'), ('approved', 'Tasdiqlangan'), ('rejected', 'Rad etilgan')], default='pending', max_length=20)),
+                ('payment_type', models.CharField(choices=[('CARD', 'Card'), ('TRANSFER', 'Transfer'), ('CRYPTO', 'Crypto')], max_length=10)),
+                ('status', models.CharField(choices=[('PENDING', 'Pending'), ('COMPLETED', 'Completed'), ('FAILED', 'Failed'), ('CANCELLED', 'Cancelled')], default='PENDING', max_length=10)),
+                ('screenshot', models.ImageField(blank=True, null=True, upload_to='payment_screenshots/')),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
                 ('subscription_plan', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='subscriptions.subscriptionplan')),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='users.user')),
             ],
