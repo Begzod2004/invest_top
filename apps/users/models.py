@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, Permission
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, Permission, AbstractUser
 from django.utils import timezone
 import uuid
 
@@ -50,7 +50,7 @@ class UserManager(BaseUserManager):
         return self.get(username=username)
 
 
-class User(AbstractBaseUser, PermissionsMixin):
+class User(AbstractUser):
     username = models.CharField(max_length=150, unique=True)
     user_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
     telegram_user_id = models.CharField(max_length=100, null=True, blank=True)
@@ -71,6 +71,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     updated_at = models.DateTimeField(auto_now=True)
 
     roles = models.ManyToManyField(Role, related_name='users', blank=True)
+
+    password = models.CharField(max_length=128)
 
     objects = UserManager()
 
