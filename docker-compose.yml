@@ -4,15 +4,13 @@ services:
   web:
     build: .
     restart: always
-    user: "${UID}:${GID}"  # Joriy foydalanuvchi ID
     ports:
       - "8080:8080"
     volumes:
       - .:/app
-      - ./static:/app/static
-      - ./media:/app/media
-      - ./staticfiles:/app/staticfiles
-      - ./data:/app/data
+      - static_volume:/app/static
+      - media_volume:/app/media
+      - staticfiles_volume:/app/staticfiles
     env_file:
       - .env
     command: >
@@ -22,7 +20,7 @@ services:
 
   bot:
     build: .
-    restart: always
+    restart: on-failure
     volumes:
       - .:/app
     env_file:
@@ -30,13 +28,17 @@ services:
     command: python manage.py runbot
     depends_on:
       - web
+    deploy:
+      replicas: 1
+    environment:
+      - PYTHONUNBUFFERED=1
 
   nginx:
     image: nginx:alpine
     volumes:
       - ./nginx:/etc/nginx/conf.d
-      - ./staticfiles:/app/staticfiles
-      - ./media:/app/media
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
     ports:
       - "8082:80"
     depends_on:
@@ -45,3 +47,4 @@ services:
 volumes:
   static_volume:
   media_volume:
+  staticfiles_volume:
