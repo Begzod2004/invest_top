@@ -28,33 +28,44 @@ dp = bot_instance['dp']
 # ✅ Foydalanuvchini yaratish yoki olish
 @sync_to_async
 def get_or_create_user(telegram_user_id, first_name, last_name, ref_code=None):
+    """Foydalanuvchini olish yoki yaratish"""
     try:
-        user, created = User.objects.get_or_create(
+        if not telegram_user_id:
+            logger.error("Telegram user ID is required")
+            return None
+
+        # Telegram user_id bo'yicha qidirish
+        user = User.objects.filter(telegram_user_id=telegram_user_id).first()
+        
+        if user:
+            # Agar foydalanuvchi topilsa, ma'lumotlarini yangilash
+            user.first_name = first_name
+            user.last_name = last_name
+            user.is_active = True
+            user.save(update_fields=['first_name', 'last_name', 'is_active'])
+            logger.info(f"User updated: {user}")
+            return user
+        
+        # Agar foydalanuvchi topilmasa, yangi yaratish
+        username = f"user_{telegram_user_id}"
+        
+        # Yangi foydalanuvchi yaratish
+        user = User.objects.create(
+            username=username,
+            user_id=telegram_user_id,
             telegram_user_id=telegram_user_id,
-            defaults={
-                "user_id": telegram_user_id,
-                "first_name": first_name,
-                "last_name": last_name,
-                "created_at": timezone.now(),
-                "phone_number": None
-            }
+            first_name=first_name,
+            last_name=last_name,
+            is_active=True,
+            date_joined=timezone.now()
         )
         
-        # Referral kodni tekshirish
-        if created and ref_code:
-            try:
-                referrer = User.objects.get(referral_code=ref_code)
-                referrer.add_referral(user)
-                user.is_subscribed = True
-                user.save()
-            except User.DoesNotExist:
-                pass
-                
-        logger.info(f"{'✅ Yangi foydalanuvchi yaratildi' if created else '✅ Mavjud foydalanuvchi olindi'}: {first_name}")
-        return user, created
+        logger.info(f"New user created: {user}")
+        return user
+        
     except Exception as e:
-        logger.error(f"❌ Foydalanuvchini yaratishda xatolik: {e}")
-        return None, False
+        logger.error(f"Error in get_or_create_user: {e}")
+        return None
 
 @sync_to_async
 def get_subscription_plans():
@@ -79,18 +90,47 @@ def create_subscription(user_id, plan_id, amount):
 # Start komandasi uchun handler
 @dp.message_handler(commands=['start'])
 async def start_command(message: types.Message):
-    """Start komandasi"""
-    keyboard = InlineKeyboardMarkup()
-    keyboard.add(InlineKeyboardButton(
-        text="🌐 Web App'ga kirish",
-        web_app={"url": WEB_APP_URL}
-    ))
-    
-    await message.answer(
-        "Assalomu alaykum! Top Invest botiga xush kelibsiz.\n"
-        "Web App orqali barcha imkoniyatlardan foydalanishingiz mumkin:",
-        reply_markup=keyboard
-    )
+    """Start komandasi uchun handler"""
+    try:
+        # Foydalanuvchi ma'lumotlarini olish
+        telegram_user = message.from_user
+        telegram_user_id = str(telegram_user.id)
+        first_name = telegram_user.first_name or ""
+        last_name = telegram_user.last_name or ""
+        username = telegram_user.username or f"user_{telegram_user_id}"
+        
+        # Referral kodni olish
+        args = message.get_args()
+        ref_code = args if args else None
+        
+        # Foydalanuvchini bazaga saqlash
+        user = await get_or_create_user(
+            telegram_user_id=telegram_user_id,
+            first_name=first_name,
+            last_name=last_name,
+            ref_code=ref_code
+        )
+        
+        if not user:
+            await message.reply("❌ Xatolik yuz berdi. Iltimos qayta urinib ko'ring.")
+            return
+            
+        # Xush kelibsiz xabarini yuborish
+        welcome_text = f"Assalomu alaykum, {first_name}! \n\n"
+        welcome_text += "Top Invest botiga xush kelibsiz! 📈\n\n"
+        welcome_text += "Bot orqali siz:\n"
+        welcome_text += "✅ Trading signallarini olishingiz\n"
+        welcome_text += "✅ Obuna bo'lishingiz\n"
+        welcome_text += "✅ Balansni to'ldirishingiz mumkin\n\n"
+        welcome_text += "Botdan foydalanish uchun /help buyrug'ini yuboring"
+        
+        # Xabarni yuborish
+        await message.answer(welcome_text)
+        logger.info(f"User started bot: {telegram_user_id} - {first_name} {last_name}")
+        
+    except Exception as e:
+        logger.error(f"Error in start_command: {e}")
+        await message.reply("❌ Xatolik yuz berdi. Iltimos qayta urinib ko'ring.")
 
 @dp.message_handler(Command('help'))
 async def help_command(message: types.Message):
@@ -526,6 +566,28 @@ def save_user(user):
     """Foydalanuvchi ma'lumotlarini saqlash"""
     user.save()
     return user
+
+# Foydalanuvchining obuna statusini tekshirish
+@sync_to_async
+def get_user_subscription_status(telegram_id):
+    try:
+        active_subscription = Subscription.objects.filter(
+            user__telegram_user_id=telegram_id,
+            is_active=True,
+            end_date__gt=timezone.now()
+        ).order_by('-end_date').first()
+        
+        if active_subscription:
+            return {
+                'plan_name': active_subscription.plan.name,
+                'start_date': active_subscription.start_date,
+                'end_date': active_subscription.end_date,
+                'days_left': (active_subscription.end_date - timezone.now()).days
+            }
+        return None
+    except Exception as e:
+        logger.error(f"Obuna statusini tekshirishda xatolik: {e}")
+        return None
 
 def register_handlers(dp: Dispatcher):
     """Handlerlarni royxatdan otkazish"""

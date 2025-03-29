@@ -2,18 +2,23 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
 
-router = DefaultRouter()
-router.register(r'api/users', views.UserViewSet, basename='users')
-router.register(r'api/signals', views.SignalViewSet, basename='signals')
-router.register(r'api/subscriptions', views.SubscriptionViewSet, basename='subscriptions')
-router.register(r'api/payments', views.PaymentViewSet, basename='payments')
-router.register(r'api/reviews', views.ReviewViewSet, basename='reviews')
-router.register(r'api/broadcast', views.BroadcastViewSet, basename='broadcast')
-
 app_name = 'dashboard'
 
+# API Router
+router = DefaultRouter()
+
+# Statistics endpoints
+router.register('staatsts/users', views.UserStatsViewSet, basename='user-stats')
+router.register('st/payments', views.PaymentStatsViewSet, basename='payment-stats') 
+router.register('stats/subscriptions', views.SubscriptionStatsViewSet, basename='subscription-stats')
+
+# Broadcast endpoints
+router.register('broadcast', views.BroadcastViewSet, basename='broadcast')
+
 urlpatterns = [
-    # API endpoints
+    # Router URLs
     path('', include(router.urls)),
-    path('verify/', views.VerifyUserView.as_view(), name='verify-user'),
+    
+    # Auth verification
+    path('auth/verify/', views.VerifyUserView.as_view(), name='verify-user'),
 ] 

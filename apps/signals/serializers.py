@@ -1,87 +1,75 @@
 from rest_framework import serializers
-from drf_spectacular.utils import extend_schema_field
-from .models import Signal
-from apps.instruments.serializers import InstrumentSerializer
+from .models import Signal, PricePoint
+from apps.instruments.models import Instrument
 
-# class SignalSerializer(serializers.ModelSerializer):
-#     admin = serializers.StringRelatedField(read_only=True)
-#     instrument = serializers.StringRelatedField()
-#     instrument_details = InstrumentSerializer(source='instrument', read_only=True)
-
-#     class Meta:
-#         model = Signal
-#         fields = ('id', 'instrument', 'instrument_details', 'entry_price', 'signal_type', 'description', 'is_active', 'is_sent', 'created_at')
-#         read_only_fields = ('created_at', 'is_sent')
-
-#     def to_representation(self, instance):
-#         # Deep nested ma'lumotlarni olmasligi kerak
-#         data = super().to_representation(instance)
-#         # Instrument ma'lumotlarini qisqartirish
-#         if 'instrument_details' in data and isinstance(data['instrument_details'], dict):
-#             data['instrument_details'] = {
-#                 'id': instance.instrument.id,
-#                 'name': instance.instrument.name,
-#                 'symbol': instance.instrument.symbol
-#             }
-#         return data
+class PricePointSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PricePoint
+        fields = ['price_type', 'price', 'order', 'description']
 
 class SignalCreateSerializer(serializers.ModelSerializer):
-    take_profits = serializers.ListField(
-        child=serializers.CharField(max_length=50),
-        required=False,
-        allow_empty=True,
-        write_only=True
-    )
-    
+    """Signal yaratish uchun serializer"""
+    entry_points = PricePointSerializer(many=True, required=False)
+    take_profits = PricePointSerializer(many=True, required=True)
+    stop_losses = PricePointSerializer(many=True, required=True)
+
     class Meta:
         model = Signal
-        fields = (
-            'instrument', 'custom_instrument', 'signal_type',
-            'entry_price', 'take_profits', 'stop_loss',
-            'risk_percentage', 'description', 'image'
-        )
-
-    def validate(self, data):
-        if not data.get('instrument') and not data.get('custom_instrument'):
-            raise serializers.ValidationError(
-                "Instrument yoki custom_instrument kiritilishi shart"
-            )
-        return data
-
+        fields = [
+            'instrument', 'signal_type', 'description', 
+            'image', 'entry_points', 'take_profits', 
+            'stop_losses'
+        ]
+    
     def create(self, validated_data):
-        take_profits = validated_data.pop('take_profits', None)
-        instance = super().create(validated_data)
-        if take_profits is not None:
-            instance.set_take_profits(take_profits)
-            instance.save()
-        return instance
+        entry_points = validated_data.pop('entry_points', [])
+        take_profits = validated_data.pop('take_profits', [])
+        stop_losses = validated_data.pop('stop_losses', [])
 
-    def update(self, instance, validated_data):
-        take_profits = validated_data.pop('take_profits', None)
-        instance = super().update(instance, validated_data)
-        if take_profits is not None:
-            instance.set_take_profits(take_profits)
-            instance.save()
-        return instance
+        signal = Signal.objects.create(**validated_data)
+
+        # Entry pointlarni yaratish
+        for entry in entry_points:
+            PricePoint.objects.create(
+                signal=signal,
+                price_type='ENTRY',
+                **entry
+            )
+        
+        # TP nuqtalarini yaratish
+        for tp in take_profits:
+            PricePoint.objects.create(
+                signal=signal,
+                price_type='TP',
+                **tp
+            )
+        
+        # SL nuqtalarini yaratish
+        for sl in stop_losses:
+            PricePoint.objects.create(
+                signal=signal,
+                price_type='SL',
+                **sl
+            )
+
+        return signal
 
 class SignalSerializer(serializers.ModelSerializer):
-    instrument = InstrumentSerializer()
-    take_profits = serializers.SerializerMethodField()
-
-    @extend_schema_field(list)
-    def get_take_profits(self, obj):
-        return obj.take_profits.split(',') if obj.take_profits else []
+    """Signal ko'rish uchun serializer"""
+    entry_points = PricePointSerializer(many=True, read_only=True)
+    take_profits = PricePointSerializer(many=True, read_only=True)
+    stop_losses = PricePointSerializer(many=True, read_only=True)
+    risk_reward = serializers.SerializerMethodField()
 
     class Meta:
         model = Signal
-        fields = '__all__'
-        read_only_fields = ['created_at']
+        fields = [
+            'id', 'instrument', 'signal_type', 'description',
+            'image', 'entry_points', 'take_profits', 'stop_losses',
+            'is_active', 'is_sent', 'success_rate', 'risk_reward',
+            'created_at', 'updated_at', 'closed_at'
+        ]
+    
+    def get_risk_reward(self, obj):
+        return obj.calculate_risk_reward()
 
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data['instrument'] = {
-            'id': instance.instrument.id,
-            'name': instance.instrument.name,
-            'symbol': instance.instrument.symbol
-        }
-        return data

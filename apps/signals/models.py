@@ -1,170 +1,271 @@
 from django.db import models
 from django.conf import settings
-from asgiref.sync import sync_to_async
-import asyncio
-import logging
-import json
-from contextlib import suppress
+from django.utils.translation import gettext_lazy as _
 from apps.users.models import User
 from apps.instruments.models import Instrument
-from django.utils import timezone
+import requests
+import logging
+from asgiref.sync import sync_to_async
+from django.core.exceptions import ValidationError
 
 logger = logging.getLogger(__name__)
 
-class Signal(models.Model):
-    SIGNAL_TYPES = (
-        ('BUY', 'Buy'),
-        ('SELL', 'Sell'),
+class PricePoint(models.Model):
+    """Signal uchun narx nuqtasi"""
+    PRICE_TYPES = [
+        ('ENTRY', _('Kirish narxi')),
+        ('TP', _('Take-profit')),
+        ('SL', _('Stop-loss')),
+    ]
+
+    signal = models.ForeignKey(
+        'Signal',
+        on_delete=models.CASCADE,
+        related_name='price_points',
+        verbose_name=_('Signal')
+    )
+    price_type = models.CharField(
+        max_length=10,
+        choices=PRICE_TYPES,
+        verbose_name=_('Narx turi')
+    )
+    price = models.CharField(
+        max_length=50,
+        verbose_name=_('Narx')
+    )
+    order = models.PositiveSmallIntegerField(
+        default=0,
+        verbose_name=_('Tartib raqami')
+    )
+    description = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=_('Izoh')
+    )
+    is_reached = models.BooleanField(
+        default=False,
+        verbose_name=_('Yetib borildimi')
+    )
+    reached_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_('Yetib borilgan vaqt')
     )
 
+    class Meta:
+        verbose_name = _('Narx nuqtasi')
+        verbose_name_plural = _('Narx nuqtalari')
+        ordering = ['order']
+
+    def __str__(self):
+        return f"{self.get_price_type_display()}: {self.price}"
+
+class Signal(models.Model):
+    """Signal modeli"""
+    
+    SIGNAL_TYPES = [
+        ('BUY', _('Sotib olish')),
+        ('SELL', _('Sotish')),
+    ]
+    
+    # Asosiy maydonlar
     instrument = models.ForeignKey(
-        Instrument, 
+        Instrument,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True
-    )
-    custom_instrument = models.CharField(
-        max_length=50, 
-        null=True, 
-        blank=True,
-        help_text="Instrument bazada bo'lmasa"
+        related_name='signals',
+        verbose_name=_('Instrument')
     )
     signal_type = models.CharField(
-        max_length=4, 
+        max_length=4,
         choices=SIGNAL_TYPES,
-        null=True,
-        blank=True
-    )
-    entry_price = models.CharField(
-        max_length=100,
-        null=True,
-        blank=True
-    )
-    take_profits = models.TextField(
-        null=True,
-        blank=True,
-        help_text="Take profit darajalari JSON formatida"
-    )
-    stop_loss = models.CharField(
-        max_length=50,
-        null=True,
-        blank=True
-    )
-    risk_percentage = models.CharField(
-        max_length=20,
-        null=True,
-        blank=True
+        verbose_name=_('Signal turi')
     )
     description = models.TextField(
         null=True,
-        blank=True
+        blank=True,
+        verbose_name=_('Tavsif')
     )
     image = models.ImageField(
         upload_to='signals/',
         null=True,
-        blank=True
+        blank=True,
+        verbose_name=_('Rasm')
     )
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_signals')
-    is_active = models.BooleanField(default=True)
-    is_posted = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
+    
+    # Status maydonlari
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name=_('Faol')
+    )
+    is_sent = models.BooleanField(
+        default=False,
+        verbose_name=_('Yuborilgan')
+    )
+    success_rate = models.FloatField(
+        default=0,
+        verbose_name=_('Muvaffaqiyat darajasi')
+    )
+    
+    # Vaqt maydonlari
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_('Yaratilgan vaqt')
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_('Yangilangan vaqt')
+    )
+    closed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_('Yopilgan vaqt')
+    )
+    
+    # Muallif
+    created_by = models.ForeignKey(
+        'users.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='signals',
+        verbose_name=_('Yaratuvchi')
+    )
+    
+    class Meta:
+        verbose_name = _('Signal')
+        verbose_name_plural = _('Signallar')
+        ordering = ['-created_at']
+    
     def __str__(self):
-        return f"{self.get_instrument_name()} - {self.signal_type}"
+        return f"{self.instrument.name} - {self.get_signal_type_display()}"
 
-    def get_instrument_name(self):
-        return self.instrument.name if self.instrument else self.custom_instrument
+    @property
+    def entry_points(self):
+        """Kirish narxlari"""
+        return self.price_points.filter(price_type='ENTRY').order_by('order')
 
-    def get_take_profits(self):
-        """Take profit larni list ko'rinishida qaytaradi"""
-        if not self.take_profits:
-            return []
+    @property
+    def take_profits(self):
+        """Take-profit narxlari"""
+        return self.price_points.filter(price_type='TP').order_by('order')
+
+    @property
+    def stop_losses(self):
+        """Stop-loss narxlari"""
+        return self.price_points.filter(price_type='SL').order_by('order')
+
+    def calculate_risk_reward(self):
+        """Risk/Reward nisbatini hisoblash"""
         try:
-            return json.loads(self.take_profits)
-        except:
-            return []
+            # Birinchi entry point va TP/SL larni olish
+            entry = self.entry_points.first()
+            tp = self.take_profits.first()
+            sl = self.stop_losses.first()
+            
+            if not all([entry, tp, sl]):
+                return None
+            
+            entry_price = float(entry.price)
+            tp_price = float(tp.price)
+            sl_price = float(sl.price)
+            
+            if self.signal_type == 'BUY':
+                risk = entry_price - sl_price
+                reward = tp_price - entry_price
+            else:  # SELL
+                risk = sl_price - entry_price
+                reward = entry_price - tp_price
+            
+            if risk <= 0:
+                return None
+                
+            return round(reward / risk, 2)
+            
+        except (ValueError, ZeroDivisionError, AttributeError):
+            return None
 
-    def set_take_profits(self, profits):
-        """Take profit larni JSON formatida saqlaydi"""
-        self.take_profits = json.dumps(profits) if profits else None
+    def format_message(self):
+        """Signal xabarini formatlash"""
+        signal_emoji = "🟢" if self.signal_type == "BUY" else "🔴"
+        signal_type = "SOTIB OLISH" if self.signal_type == "BUY" else "SOTISH"
+        
+        message = f"{signal_emoji} #{self.instrument.name} #{signal_type}\n\n"
+        
+        # Entry pointlarni formatlash
+        message += "📍 Kirish narxlari:\n"
+        for entry in self.entry_points:
+            message += f"• {entry.price}\n"
+        message += "\n"
+        
+        # Take-profit larni formatlash
+        message += "🎯 Take-Profit:\n"
+        for tp in self.take_profits:
+            message += f"• {tp.price}\n"
+        message += "\n"
+        
+        # Stop-loss larni formatlash
+        message += "🛑 Stop-Loss:\n"
+        for sl in self.stop_losses:
+            message += f"• {sl.price}\n"
+        message += "\n"
+        
+        # Qo'shimcha ma'lumotlar
+        if self.description:
+            message += f"ℹ️ {self.description}\n\n"
+        
+        # Risk/Reward
+        risk_reward = self.calculate_risk_reward()
+        if risk_reward:
+            message += f"📊 Risk/Reward: {risk_reward:.2f}\n\n"
+        
+        message += "#trading #signals"
+        return message
 
     async def send_to_telegram(self):
-        from invest_bot.bot import bot, CHANNEL_ID
-        
-        take_profits = self.get_take_profits()
-        take_profits_text = "\n".join([f"✅ Take Profit {i+1}: {tp}" for i, tp in enumerate(take_profits)]) if take_profits else "❌ Take Profit belgilanmagan"
-        
-        text = (
-            f"📊 *YANGI SIGNAL* 📊\n\n"
-            f"🎯 *{self.get_instrument_name()}*\n"
-            f"📈 Order: {self.signal_type.upper()}\n"
-            f"💰 Narx: {self.entry_price}\n"
-            f"🛑 Stop Loss: {self.stop_loss}\n"
-            f"{take_profits_text}\n"
-        )
-
-        if self.risk_percentage:
-            text += f"❕ Risk: {self.risk_percentage}\n"
-        
-        if self.description:
-            text += f"\n📝 {self.description}\n"
-            
-        text += f"\n⏰ {self.created_at.strftime('%Y-%m-%d %H:%M')}"
-        
+        """Signalni telegram kanaliga yuborish"""
         try:
-            async with asyncio.timeout(10):
-                await bot.send_message(
-                    chat_id=CHANNEL_ID,
-                    text=text,
-                    parse_mode="Markdown"
-                )
-                
-                if self.image:
-                    await bot.send_photo(
-                        chat_id=CHANNEL_ID,
-                        photo=open(self.image.path, 'rb')
-                    )
-                return True
-        except Exception as e:
-            logger.error(f"Signal yuborishda xatolik: {e}")
-            return False
-
-    def save(self, *args, **kwargs):
-        is_new = self._state.adding
-        super().save(*args, **kwargs)
-        
-        if is_new and not self.is_posted:
-            try:
-                loop = asyncio.get_event_loop()
-            except RuntimeError:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
+            bot_token = settings.BOT_TOKEN
+            channel_id = settings.CHANNEL_ID
             
-            async def send_with_retry(max_retries=3):
-                for attempt in range(max_retries):
-                    if await self.send_to_telegram():
-                        return True
-                    if attempt < max_retries - 1:
-                        await asyncio.sleep(1)
-                return False
+            if not bot_token or not channel_id:
+                raise ValidationError("Bot token yoki kanal ID topilmadi")
             
-            if loop.is_running():
-                future = asyncio.run_coroutine_threadsafe(send_with_retry(), loop)
-                try:
-                    if future.result(timeout=15):
-                        self.is_posted = True
-                        self.save(update_fields=['is_posted'])
-                except Exception as e:
-                    logger.error(f"Signal yuborishda xatolik: {e}")
+            base_url = f"https://api.telegram.org/bot{bot_token}"
+            
+            # Format message using sync_to_async
+            message = await sync_to_async(self.format_message)()
+            
+            # Rasm bor bo'lsa, rasm bilan yuborish
+            if self.image:
+                photo_url = f"{base_url}/sendPhoto"
+                data = {
+                    "chat_id": channel_id,
+                    "photo": self.image.url,
+                    "caption": message,
+                    "parse_mode": "HTML"
+                }
+                response = requests.post(photo_url, data=data)
             else:
-                with suppress(Exception):
-                    success = loop.run_until_complete(send_with_retry())
-                    if success:
-                        self.is_posted = True
-                        self.save(update_fields=['is_posted'])
-
-    class Meta:
-        ordering = ['-created_at']
-        verbose_name = 'Signal'
-        verbose_name_plural = 'Signallar'
+                # Faqat xabar yuborish
+                message_url = f"{base_url}/sendMessage"
+                data = {
+                    "chat_id": channel_id,
+                    "text": message,
+                    "parse_mode": "HTML"
+                }
+                response = requests.post(message_url, data=data)
+            
+            if response.status_code == 200:
+                self.is_sent = True
+                await sync_to_async(self.save)()
+                logger.info(f"Signal #{self.id} muvaffaqiyatli yuborildi")
+                return True
+            else:
+                error_msg = f"Telegram API xatosi: {response.text}"
+                logger.error(error_msg)
+                raise ValidationError(error_msg)
+                
+        except Exception as e:
+            error_msg = f"Signal yuborishda xatolik: {str(e)}"
+            logger.error(error_msg)
+            raise ValidationError(error_msg)

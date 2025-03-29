@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import SignalViewSet
 
 router = DefaultRouter()
-router.register('', SignalViewSet)
+router.register('signals', SignalViewSet)
 
 app_name = 'signals'
 

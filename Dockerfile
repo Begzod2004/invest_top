@@ -18,13 +18,13 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Create necessary directories
-RUN mkdir -p /app/media /app/staticfiles /app/static
+RUN mkdir -p /app/media /app/staticfiles /app/static /app/logs
 
 # Copy project files
 COPY . .
 
 # Set permissions
-RUN chmod -R 777 /app/media /app/staticfiles /app/static
+RUN chmod -R 777 /app/media /app/staticfiles /app/static /app/logs
 
 # Expose port
 EXPOSE 8000

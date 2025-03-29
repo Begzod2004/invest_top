@@ -9,7 +9,7 @@ from apps.invest_bot.bot_config import BOT_TOKEN
 from aiogram import Bot
 from apps.users.models import User
 from .models import BroadcastMessage
-from .serializers import BroadcastMessageSerializer, UserVerifySerializer, UserSerializer, SignalSerializer, SubscriptionSerializer, PaymentSerializer, ReviewSerializer, InstrumentSerializer
+from .serializers import BroadcastMessageSerializer, UserVerifySerializer, UserSerializer, SignalSerializer, SubscriptionSerializer, PaymentSerializer, ReviewSerializer, InstrumentSerializer, UserStatsSerializer, PaymentStatsSerializer, SubscriptionStatsSerializer
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import (UserFilter, SignalFilter, SubscriptionFilter, 
@@ -21,187 +21,54 @@ from apps.reviews.models import Review
 from apps.instruments.models import Instrument
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
+from apps.invest_bot.bot import broadcast_message
+import logging
+from django.utils import timezone
+from django.db.models import Count, Sum
+from datetime import timedelta
+from django.db import models
+
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 
 @extend_schema(tags=['broadcast'])
-class BroadcastViewSet(viewsets.ModelViewSet):
-    """
-    Xabarlarni yuborish uchun API
-    """
-    queryset = BroadcastMessage.objects.all()
-    serializer_class = BroadcastMessageSerializer
+class BroadcastViewSet(viewsets.ViewSet):
+    """Foydalanuvchilarga xabar yuborish uchun API"""
     permission_classes = [IsAdminUser]
-    
-    def perform_create(self, serializer):
-        serializer.save(sent_by=self.request.user)
-    
-    @action(detail=False, methods=['post'], url_path='send')
-    def send_broadcast(self, request):
-        """Xabar yuborish"""
-        try:
-            recipient_type = request.data.get('recipient_type')
-            message = request.data.get('message')
+    serializer_class = BroadcastMessageSerializer
+
+    @action(detail=False, methods=['post'])
+    async def send(self, request):
+        """Foydalanuvchilarga ommaviy xabar yuborish"""
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            message = serializer.validated_data['message']
+            user_ids = serializer.validated_data.get('user_ids', [])
             
-            if not message:
-                return Response({
-                    'status': 'error',
-                    'message': 'Xabar matni kiritilmagan'
-                }, status=status.HTTP_400_BAD_REQUEST)
+            if not user_ids:
+                users = User.objects.filter(telegram_user_id__isnull=False)
+                user_ids = [user.telegram_user_id for user in users]
             
-            # Foydalanuvchilarni olish
-            if recipient_type == 'all':
-                users = User.objects.all()
-            elif recipient_type == 'subscribed':
-                users = User.objects.filter(is_subscribed=True)
-            elif recipient_type == 'active':
-                users = User.objects.filter(is_blocked=False)
-            else:
-                return Response({
-                    'status': 'error',
-                    'message': 'Noto\'g\'ri recipient_type'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Xabarni saqlash
-            broadcast = BroadcastMessage.objects.create(
-                message=message,
-                recipient_type=recipient_type,
-                sent_by=request.user
-            )
-            
-            # Xabarni yuborish
-            async def send_messages():
-                bot = Bot(token=BOT_TOKEN)
-                success_count = 0
-                error_count = 0
-                
-                for user in users:
-                    try:
-                        await bot.send_message(
-                            chat_id=int(user.telegram_user_id),
-                            text=message
-                        )
-                        success_count += 1
-                    except Exception as e:
-                        error_count += 1
-                
-                await bot.session.close()
-                return success_count, error_count
-            
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            success_count, error_count = loop.run_until_complete(send_messages())
-            loop.close()
-            
-            # Natijalarni saqlash
-            broadcast.success_count = success_count
-            broadcast.error_count = error_count
-            broadcast.save()
-            
-            return Response({
-                'status': 'success',
-                'message': f'Xabar yuborildi: {success_count} ta muvaffaqiyatli, {error_count} ta xatolik',
-                'broadcast': BroadcastMessageSerializer(broadcast).data
-            })
-        except Exception as e:
-            return Response({
-                'status': 'error',
-                'message': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    @extend_schema(
-        parameters=[
-            OpenApiParameter(
-                name='user_id',
-                type=int,
-                location=OpenApiParameter.PATH,
-                description='Foydalanuvchi ID si'
-            ),
-        ]
-    )
-    @action(detail=False, methods=['post'], url_path='send-to-user/(?P<user_id>[^/.]+)')
-    def send_to_user(self, request, user_id=None):
-        """Bitta foydalanuvchiga xabar yuborish"""
-        try:
-            message = request.data.get('message')
-            
-            if not message:
-                return Response({
-                    'status': 'error',
-                    'message': 'Xabar matni kiritilmagan'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Foydalanuvchini olish
             try:
-                user = User.objects.get(id=user_id)
-            except User.DoesNotExist:
-                return Response({
-                    'status': 'error',
-                    'message': 'Foydalanuvchi topilmadi'
-                }, status=status.HTTP_404_NOT_FOUND)
-            
-            # Xabarni yuborish
-            async def send_message():
-                bot = Bot(token=BOT_TOKEN)
-                try:
-                    await bot.send_message(
-                        chat_id=int(user.telegram_user_id),
-                        text=message
-                    )
-                    success = True
-                except Exception as e:
-                    success = False
-                
-                await bot.session.close()
-                return success
-            
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            success = loop.run_until_complete(send_message())
-            loop.close()
-            
-            if success:
+                stats = await broadcast_message(user_ids, message)
                 return Response({
                     'status': 'success',
-                    'message': f'Xabar {user.first_name} ga muvaffaqiyatli yuborildi'
+                    'message': 'Xabar yuborish yakunlandi',
+                    'stats': stats
                 })
-            else:
+            except Exception as e:
+                logger.error(f"Broadcast error: {str(e)}")
                 return Response({
                     'status': 'error',
-                    'message': f'Xabarni {user.first_name} ga yuborishda xatolik yuz berdi'
+                    'message': str(e)
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        except Exception as e:
-            return Response({
-                'status': 'error',
-                'message': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    @action(detail=False, methods=['post'], url_path='send-all')
-    def send_to_all(self, request):
-        """Barcha foydalanuvchilarga xabar yuborish"""
-        request.data['recipient_type'] = 'all'
-        return self.send_broadcast(request)
-    
-    @action(detail=False, methods=['post'], url_path='send-active')
-    def send_to_active(self, request):
-        """Faol foydalanuvchilarga xabar yuborish"""
-        request.data['recipient_type'] = 'active'
-        return self.send_broadcast(request)
-    
-    @action(detail=False, methods=['post'], url_path='send-subscribed')
-    def send_to_subscribed(self, request):
-        """Obuna bo'lgan foydalanuvchilarga xabar yuborish"""
-        request.data['recipient_type'] = 'subscribed'
-        return self.send_broadcast(request)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@extend_schema(
-    tags=['auth'],
-    responses={200: UserVerifySerializer}
-)
+@extend_schema(tags=['auth'])
 class VerifyUserView(APIView):
-    """
-    Foydalanuvchi autentifikatsiyasini tekshirish
-    """
+    """Foydalanuvchi autentifikatsiyasini tekshirish"""
     permission_classes = [IsAuthenticated]
     serializer_class = UserVerifySerializer
     
@@ -223,15 +90,36 @@ class UserViewSet(viewsets.ModelViewSet):
     ordering_fields = ['date_joined', 'username', 'first_name', 'last_name', 'balance']
     ordering = ['-date_joined']
 
+    def get_queryset(self):
+        """Foydalanuvchilar ro'yxatini olish"""
+        queryset = User.objects.all()
+        
+        # Faqat telegram foydalanuvchilarini olish
+        telegram_only = self.request.query_params.get('telegram_only', False)
+        if telegram_only and telegram_only.lower() == 'true':
+            queryset = queryset.filter(telegram_user_id__isnull=False)
+            
+        # Faol foydalanuvchilarni olish
+        is_active = self.request.query_params.get('is_active')
+        if is_active is not None:
+            is_active = is_active.lower() == 'true'
+            queryset = queryset.filter(is_active=is_active)
+
+        # Admin foydalanuvchilarni olish
+        is_admin = self.request.query_params.get('is_admin')
+        if is_admin is not None:
+            is_admin = is_admin.lower() == 'true'
+            queryset = queryset.filter(is_admin=is_admin)
+            
+        return queryset
+
     @extend_schema(
+        summary="Foydalanuvchilar ro'yxati",
+        description="Barcha foydalanuvchilarni ko'rish. Telegram foydalanuvchilarini ko'rish uchun ?telegram_only=true parametrini qo'shing",
         parameters=[
-            OpenApiParameter(name='username', type=str, description='Username bo\'yicha filtrlash'),
-            OpenApiParameter(name='is_active', type=bool, description='Faol foydalanuvchilar'),
-            OpenApiParameter(name='is_admin', type=bool, description='Admin foydalanuvchilar'),
-            OpenApiParameter(name='balance_min', type=float, description='Minimal balans'),
-            OpenApiParameter(name='balance_max', type=float, description='Maksimal balans'),
-            OpenApiParameter(name='search', type=str, description='Qidirish'),
-            OpenApiParameter(name='ordering', type=str, description='Tartiblash (-date_joined, username)'),
+            OpenApiParameter(name='telegram_only', type=bool, description='Faqat Telegram foydalanuvchilarini ko\'rish'),
+            OpenApiParameter(name='is_active', type=bool, description='Faol foydalanuvchilarni ko\'rish'),
+            OpenApiParameter(name='is_admin', type=bool, description='Admin foydalanuvchilarni ko\'rish')
         ]
     )
     def list(self, request, *args, **kwargs):
@@ -368,3 +256,114 @@ class InstrumentViewSet(viewsets.ModelViewSet):
     )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
+
+@extend_schema(tags=['stats'])
+class UserStatsViewSet(viewsets.ViewSet):
+    """Foydalanuvchilar statistikasi"""
+    permission_classes = [IsAdminUser]
+    serializer_class = UserStatsSerializer
+
+    @action(detail=False, methods=['get'])
+    def overview(self, request):
+        """Umumiy statistika"""
+        total_users = User.objects.count()
+        active_users = User.objects.filter(is_active=True).count()
+        telegram_users = User.objects.filter(telegram_user_id__isnull=False).count()
+            
+        return Response({
+            'total_users': total_users,
+            'active_users': active_users,
+            'telegram_users': telegram_users
+        })
+
+    @action(detail=False, methods=['get'])
+    def growth(self, request):
+        """O'sish statistikasi"""
+        days = int(request.query_params.get('days', 7))
+        data = []
+        
+        for i in range(days):
+            date = timezone.now().date() - timedelta(days=i)
+            count = User.objects.filter(date_joined__date=date).count()
+            data.append({
+                'date': date,
+                'new_users': count
+            })
+            
+        return Response(data)
+
+@extend_schema(tags=['stats'])
+class PaymentStatsViewSet(viewsets.ViewSet):
+    """To'lovlar statistikasi"""
+    permission_classes = [IsAdminUser]
+    serializer_class = PaymentStatsSerializer
+
+    @action(detail=False, methods=['get'])
+    def overview(self, request):
+        """Umumiy statistika"""
+        total_payments = Payment.objects.count()
+        successful_payments = Payment.objects.filter(status='completed').count()
+        total_amount = Payment.objects.filter(status='completed').aggregate(
+            total=Sum('amount')
+        )['total'] or 0
+        
+        return Response({
+            'total_payments': total_payments,
+            'successful_payments': successful_payments,
+            'total_amount': total_amount
+        })
+
+    @action(detail=False, methods=['get'])
+    def daily(self, request):
+        """Kunlik statistika"""
+        days = int(request.query_params.get('days', 7))
+        data = []
+        
+        for i in range(days):
+            date = timezone.now().date() - timedelta(days=i)
+            payments = Payment.objects.filter(created_at__date=date)
+            
+            data.append({
+                'date': date,
+                'count': payments.count(),
+                'amount': payments.filter(status='completed').aggregate(
+                    total=Sum('amount')
+                )['total'] or 0
+            })
+            
+        return Response(data)
+
+@extend_schema(tags=['stats'])
+class SubscriptionStatsViewSet(viewsets.ViewSet):
+    """Obunalar statistikasi"""
+    permission_classes = [IsAdminUser]
+    serializer_class = SubscriptionStatsSerializer
+
+    @action(detail=False, methods=['get'])
+    def overview(self, request):
+        """Umumiy statistika"""
+        total_subs = Subscription.objects.count()
+        active_subs = Subscription.objects.filter(
+            start_date__lte=timezone.now(),
+            end_date__gte=timezone.now()
+        ).count()
+        
+        return Response({
+            'total_subscriptions': total_subs,
+            'active_subscriptions': active_subs
+        })
+
+    @action(detail=False, methods=['get'])
+    def by_plan(self, request):
+        """Tarif rejalar bo'yicha statistika"""
+        subscriptions = Subscription.objects.values(
+            'plan__name'
+        ).annotate(
+            total=Count('id'),
+            active=Count('id', filter=models.Q(
+                start_date__lte=timezone.now(),
+                end_date__gte=timezone.now()
+            ))
+        )
+        
+        return Response(subscriptions)

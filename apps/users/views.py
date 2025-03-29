@@ -260,12 +260,61 @@ class UserViewSet(viewsets.ModelViewSet):
         user.save()
         return Response({'status': 'user unblocked'})
 
+    @extend_schema(
+        tags=['users-admin'],
+        summary="Foydalanuvchini guruhlarga qo'shish",
+        description="Foydalanuvchini berilgan guruhlarga qo'shish",
+        request={
+            'type': 'object',
+            'properties': {
+                'groups': {
+                    'type': 'array',
+                    'items': {'type': 'integer'},
+                    'description': 'Guruh IDlari'
+                }
+            },
+            'required': ['groups']
+        },
+        responses={
+            200: {
+                'type': 'object',
+                'properties': {
+                    'status': {'type': 'string'},
+                    'added_groups': {'type': 'array', 'items': {'type': 'string'}}
+                }
+            },
+            400: {'description': 'Noto\'g\'ri so\'rov'},
+            404: {'description': 'Guruh topilmadi'}
+        }
+    )
     @action(detail=True, methods=['post'])
     def add_to_groups(self, request, pk=None):
+        """Foydalanuvchini guruhlarga qo'shish"""
         user = self.get_object()
-        groups = Group.objects.filter(id__in=request.data.get('groups', []))
+        
+        # Request body validatsiyasi
+        groups_ids = request.data.get('groups')
+        if not groups_ids or not isinstance(groups_ids, list):
+            return Response(
+                {'error': 'groups maydonida guruh IDlari ro\'yxati bo\'lishi kerak'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Guruhlarni bazadan olish
+        groups = Group.objects.filter(id__in=groups_ids)
+        if not groups.exists():
+            return Response(
+                {'error': 'Berilgan IDga ega guruhlar topilmadi'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Foydalanuvchini guruhlarga qo'shish
         user.groups.add(*groups)
-        return Response({'status': 'groups added'})
+        
+        return Response({
+            'status': 'groups added',
+            'added_groups': list(groups.values_list('name', flat=True))
+        })
 
     @action(detail=True, methods=['post'])
     def remove_from_groups(self, request, pk=None):
@@ -439,3 +488,182 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 response.data['user'] = user_data
         
         return response
+
+@extend_schema(
+    tags=['auth'],
+    responses={
+        200: {
+            'type': 'object',
+            'properties': {
+                'permissions': {
+                    'type': 'array',
+                    'items': {'type': 'string'}
+                },
+                'is_admin': {'type': 'boolean'},
+                'menu_items': {
+                    'type': 'array',
+                    'items': {
+                        'type': 'object',
+                        'properties': {
+                            'id': {'type': 'string'},
+                            'title': {'type': 'string'},
+                            'path': {'type': 'string'},
+                            'icon': {'type': 'string'},
+                            'permissions': {'type': 'array', 'items': {'type': 'string'}}
+                        }
+                    }
+                }
+            }
+        }
+    }
+)
+class UserPermissionsView(APIView):
+    """
+    Foydalanuvchining ruxsatlari va menu elementlarini qaytaradi.
+    Frontend uchun sidebar va permission checking qilish uchun ishlatiladi.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        user = request.user
+        # Barcha ruxsatlarni yig'ish
+        permissions = self.get_all_permissions(user)
+        
+        # Menu itemlarni olish
+        menu_items = self.get_menu_items(permissions, user.is_admin)
+        
+        return Response({
+            'permissions': permissions,
+            'is_admin': user.is_admin,
+            'menu_items': menu_items,
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'full_name': user.full_name
+            }
+        })
+    
+    def get_all_permissions(self, user):
+        """
+        User permissions, group permissions va role permissions larni birlashtiradi
+        """
+        all_permissions = set()
+        
+        # Django standart permission tizimi
+        for perm in user.user_permissions.all().values_list('codename', flat=True):
+            all_permissions.add(perm)
+        
+        # Group permissions
+        for group in user.groups.all():
+            for perm in group.permissions.all().values_list('codename', flat=True):
+                all_permissions.add(perm)
+        
+        # Custom role tizimi
+        for role in user.roles.all():
+            for perm in role.permissions.all().values_list('codename', flat=True):
+                all_permissions.add(perm)
+        
+        return list(all_permissions)
+    
+    def get_menu_items(self, permissions, is_admin):
+        """Menu elementlarini qaytaradi"""
+        # Menu strukturasi
+        menu_items = [
+            {
+                'id': 'dashboard',
+                'title': 'Dashboard',
+                'icon': 'dashboard',
+                'path': '/dashboard',
+                'permissions': []  # Bo'sh permissions = hammaga ko'rinadi
+            }
+        ]
+        
+        # Signals menu
+        if is_admin or 'can_view_signals' in permissions:
+            signals_item = {
+                'id': 'signals',
+                'title': 'Signallar',
+                'icon': 'chart-line',
+                'path': '/signals',
+                'permissions': ['can_view_signals']
+            }
+            
+            # Submenu for admins or users with create permission
+            if is_admin or 'can_create_signals' in permissions:
+                signals_item['children'] = [
+                    {
+                        'id': 'create-signal',
+                        'title': 'Yangi signal',
+                        'path': '/signals/create',
+                        'permissions': ['can_create_signals']
+                    }
+                ]
+            
+            menu_items.append(signals_item)
+        
+        # Users menu (faqat adminlar va ruxsati borlar uchun)
+        if is_admin or 'can_view_users' in permissions:
+            users_item = {
+                'id': 'users',
+                'title': 'Foydalanuvchilar',
+                'icon': 'users',
+                'path': '/users',
+                'permissions': ['can_view_users']
+            }
+            menu_items.append(users_item)
+        
+        # To'lovlar menu
+        if is_admin or 'can_view_payments' in permissions:
+            payments_item = {
+                'id': 'payments',
+                'title': 'To\'lovlar',
+                'icon': 'credit-card',
+                'path': '/payments',
+                'permissions': ['can_view_payments']
+            }
+            menu_items.append(payments_item)
+        
+        # Obunalar menu
+        if is_admin or 'can_view_subscriptions' in permissions:
+            subscriptions_item = {
+                'id': 'subscriptions',
+                'title': 'Obunalar',
+                'icon': 'star',
+                'path': '/subscriptions',
+                'permissions': ['can_view_subscriptions']
+            }
+            menu_items.append(subscriptions_item)
+        
+        # Instrumentlar menu
+        instruments_item = {
+            'id': 'instruments',
+            'title': 'Instrumentlar',
+            'icon': 'chart-bar',
+            'path': '/instruments',
+            'permissions': []  # Hamma uchun
+        }
+        menu_items.append(instruments_item)
+        
+        # Sharhlar menu
+        if is_admin or 'can_view_reviews' in permissions:
+            reviews_item = {
+                'id': 'reviews',
+                'title': 'Sharhlar',
+                'icon': 'comment',
+                'path': '/reviews',
+                'permissions': ['can_view_reviews']
+            }
+            menu_items.append(reviews_item)
+        
+        # Admin sozlamalari (faqat admin uchun)
+        if is_admin:
+            settings_item = {
+                'id': 'settings',
+                'title': 'Sozlamalar',
+                'icon': 'cog',
+                'path': '/settings',
+                'permissions': ['is_admin']
+            }
+            menu_items.append(settings_item)
+        
+        return menu_items

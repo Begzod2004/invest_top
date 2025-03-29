@@ -5,22 +5,43 @@ from apps.subscriptions.models import Subscription
 from apps.payments.models import Payment
 from apps.reviews.models import Review
 from apps.instruments.models import Instrument
+from django.utils import timezone
 
 class UserFilter(filters.FilterSet):
+    """
+    Foydalanuvchilarni filtrlash uchun filter
+    """
     username = filters.CharFilter(lookup_expr='icontains')
     first_name = filters.CharFilter(lookup_expr='icontains')
     last_name = filters.CharFilter(lookup_expr='icontains')
     phone_number = filters.CharFilter(lookup_expr='icontains')
+    telegram_user_id = filters.CharFilter(lookup_expr='icontains')
     is_active = filters.BooleanFilter()
-    is_admin = filters.BooleanFilter()
-    is_subscribed = filters.BooleanFilter()
-    date_joined = filters.DateFromToRangeFilter()
-    balance = filters.RangeFilter()
+    is_staff = filters.BooleanFilter()
+    balance_min = filters.NumberFilter(field_name='balance', lookup_expr='gte')
+    balance_max = filters.NumberFilter(field_name='balance', lookup_expr='lte')
+    date_joined_after = filters.DateTimeFilter(field_name='date_joined', lookup_expr='gte')
+    date_joined_before = filters.DateTimeFilter(field_name='date_joined', lookup_expr='lte')
+    has_subscription = filters.BooleanFilter(method='filter_has_subscription')
     
     class Meta:
         model = User
-        fields = ['username', 'first_name', 'last_name', 'phone_number', 
-                 'is_active', 'is_admin', 'is_subscribed', 'date_joined', 'balance']
+        fields = [
+            'username', 'first_name', 'last_name', 'phone_number',
+            'telegram_user_id', 'is_active', 'is_staff'
+        ]
+        
+    def filter_has_subscription(self, queryset, name, value):
+        """Obunasi bor/yo'q foydalanuvchilarni filtrlash"""
+        if value:
+            return queryset.filter(
+                subscriptions__is_active=True,
+                subscriptions__expires_at__gt=timezone.now()
+            )
+        return queryset.exclude(
+            subscriptions__is_active=True,
+            subscriptions__expires_at__gt=timezone.now()
+        )
 
 class SignalFilter(filters.FilterSet):
     created_at = filters.DateFromToRangeFilter()

@@ -2,6 +2,9 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, Permission, AbstractUser
 from django.utils import timezone
 import uuid
+import jwt
+from django.utils.timezone import now, timedelta
+from django.conf import settings
 
 def generate_uuid():
     """Unique UUID yaratish"""
@@ -70,6 +73,7 @@ class User(AbstractUser):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
+    is_subscribed = models.BooleanField(default=False)
 
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     updated_at = models.DateTimeField(auto_now=True)
@@ -125,3 +129,19 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.full_name
+
+    def get_temp_token(self):
+        """
+        Generate a temporary JWT token valid for 24 hours.
+        Returns:
+            str: JWT token
+        """
+        payload = {
+            'user_id': self.id,
+            'exp': now() + timedelta(hours=24)
+        }
+        return jwt.encode(
+            payload,
+            settings.JWT_SECRET_KEY,
+            algorithm=settings.JWT_ALGORITHM
+        )

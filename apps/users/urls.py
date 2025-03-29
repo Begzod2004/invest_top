@@ -3,7 +3,8 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
     UserViewSet, GroupViewSet, PermissionViewSet,
-    CustomTokenObtainPairView, VerifyMeView
+    CustomTokenObtainPairView, VerifyMeView,
+    UserPermissionsView
 )
 
 router = DefaultRouter()
@@ -16,4 +17,5 @@ urlpatterns = [
     path('auth/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('auth/verify-me/', VerifyMeView.as_view(), name='verify_me'),
+    path('auth/permissions/', UserPermissionsView.as_view(), name='user-permissions'),
 ]
