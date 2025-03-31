@@ -1,0 +1,4163 @@
+openapi: 3.0.3
+info:
+  title: Top Invest API
+  version: 1.0.0
+  description: Top Invest API Documentation
+paths:
+  /dashboard/auth/verify/:
+    get:
+      operationId: dashboard_auth_verify_retrieve
+      description: Foydalanuvchi autentifikatsiyasini tekshirish
+      tags:
+      - auth
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserVerify'
+          description: ''
+  /dashboard/broadcast/send_message/:
+    post:
+      operationId: dashboard_broadcast_send_message_create
+      description: Xabarni yuborish
+      tags:
+      - broadcast
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BroadcastMessageRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BroadcastMessageRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BroadcastMessageRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BroadcastMessage'
+          description: ''
+  /dashboard/instruments/:
+    get:
+      operationId: dashboard_instruments_list
+      description: Instrumentlar bilan ishlash uchun API
+      parameters:
+      - in: query
+        name: created_at_after
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: created_at_before
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+        description: Faol instrumentlar
+      - in: query
+        name: name
+        schema:
+          type: string
+        description: Nom bo'yicha filtrlash
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: Tartiblash (name, -created_at)
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Qidirish
+      - in: query
+        name: symbol
+        schema:
+          type: string
+        description: Symbol bo'yicha filtrlash
+      tags:
+      - instruments
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Instrument'
+          description: ''
+    post:
+      operationId: dashboard_instruments_create
+      description: Instrumentlar bilan ishlash uchun API
+      tags:
+      - instruments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstrumentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InstrumentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InstrumentRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Instrument'
+          description: ''
+  /dashboard/instruments/{id}/:
+    get:
+      operationId: dashboard_instruments_retrieve
+      description: Instrumentlar bilan ishlash uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Instrument.
+        required: true
+      tags:
+      - instruments
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Instrument'
+          description: ''
+    put:
+      operationId: dashboard_instruments_update
+      description: Instrumentlar bilan ishlash uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Instrument.
+        required: true
+      tags:
+      - instruments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstrumentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InstrumentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InstrumentRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Instrument'
+          description: ''
+    patch:
+      operationId: dashboard_instruments_partial_update
+      description: Instrumentlar bilan ishlash uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Instrument.
+        required: true
+      tags:
+      - instruments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedInstrumentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedInstrumentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedInstrumentRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Instrument'
+          description: ''
+    delete:
+      operationId: dashboard_instruments_destroy
+      description: Instrumentlar bilan ishlash uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Instrument.
+        required: true
+      tags:
+      - instruments
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '204':
+          description: No response body
+  /dashboard/reviews/:
+    get:
+      operationId: dashboard_reviews_list
+      description: Sharhlar bilan ishlash uchun API
+      parameters:
+      - in: query
+        name: comment
+        schema:
+          type: string
+        description: Izoh bo'yicha qidirish
+      - in: query
+        name: created_at_after
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: created_at_before
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: is_approved
+        schema:
+          type: boolean
+        description: Tasdiqlangan sharhlar
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: Tartiblash (-created_at, rating)
+      - in: query
+        name: rating
+        schema:
+          type: integer
+        description: Reyting bo'yicha filtrlash
+      - in: query
+        name: rating_max
+        schema:
+          type: integer
+      - in: query
+        name: rating_min
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Qidirish
+      - in: query
+        name: user
+        schema:
+          type: string
+      tags:
+      - reviews
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+          description: ''
+    post:
+      operationId: dashboard_reviews_create
+      description: Sharhlar bilan ishlash uchun API
+      tags:
+      - reviews
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReviewRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReviewRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+          description: ''
+  /dashboard/reviews/{id}/:
+    get:
+      operationId: dashboard_reviews_retrieve
+      description: Sharhlar bilan ishlash uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Sharh.
+        required: true
+      tags:
+      - reviews
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+          description: ''
+    put:
+      operationId: dashboard_reviews_update
+      description: Sharhlar bilan ishlash uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Sharh.
+        required: true
+      tags:
+      - reviews
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReviewRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReviewRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+          description: ''
+    patch:
+      operationId: dashboard_reviews_partial_update
+      description: Sharhlar bilan ishlash uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Sharh.
+        required: true
+      tags:
+      - reviews
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedReviewRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedReviewRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedReviewRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+          description: ''
+    delete:
+      operationId: dashboard_reviews_destroy
+      description: Sharhlar bilan ishlash uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Sharh.
+        required: true
+      tags:
+      - reviews
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '204':
+          description: No response body
+  /dashboard/reviews/stats/:
+    get:
+      operationId: dashboard_reviews_stats_retrieve
+      description: Sharhlar statistikasi
+      tags:
+      - reviews
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+          description: ''
+  /dashboard/signals/:
+    get:
+      operationId: dashboard_signals_list
+      description: Signallar bilan ishlash uchun API
+      parameters:
+      - in: query
+        name: created_at_after
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: created_at_before
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: entry_price_max
+        schema:
+          type: number
+          format: double
+        description: Maksimal kirish narxi
+      - in: query
+        name: entry_price_min
+        schema:
+          type: number
+          format: double
+        description: Minimal kirish narxi
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+        description: Faol signallar
+      - in: query
+        name: is_sent
+        schema:
+          type: boolean
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: Tartiblash (-created_at, entry_price)
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Qidirish
+      - in: query
+        name: signal_type
+        schema:
+          type: string
+        description: Signal turi (BUY/SELL)
+      - in: query
+        name: success_rate_max
+        schema:
+          type: number
+          format: float
+      - in: query
+        name: success_rate_min
+        schema:
+          type: number
+          format: float
+      - in: query
+        name: symbol
+        schema:
+          type: string
+      - in: query
+        name: type
+        schema:
+          type: string
+          title: Signal turi
+          enum:
+          - BUY
+          - SELL
+        description: |-
+          * `BUY` - Sotib olish
+          * `SELL` - Sotish
+      - in: query
+        name: user
+        schema:
+          type: string
+      tags:
+      - signals
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Signal'
+          description: ''
+    post:
+      operationId: dashboard_signals_create
+      description: Signallar bilan ishlash uchun API
+      tags:
+      - signals
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignalRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SignalRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SignalRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Signal'
+          description: ''
+  /dashboard/signals/{id}/:
+    get:
+      operationId: dashboard_signals_retrieve
+      description: Signallar bilan ishlash uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Signal.
+        required: true
+      tags:
+      - signals
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Signal'
+          description: ''
+    put:
+      operationId: dashboard_signals_update
+      description: Signallar bilan ishlash uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Signal.
+        required: true
+      tags:
+      - signals
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignalRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SignalRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SignalRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Signal'
+          description: ''
+    patch:
+      operationId: dashboard_signals_partial_update
+      description: Signallar bilan ishlash uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Signal.
+        required: true
+      tags:
+      - signals
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSignalRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSignalRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSignalRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Signal'
+          description: ''
+    delete:
+      operationId: dashboard_signals_destroy
+      description: Signallar bilan ishlash uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Signal.
+        required: true
+      tags:
+      - signals
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '204':
+          description: No response body
+  /dashboard/signals/stats/:
+    get:
+      operationId: dashboard_signals_stats_retrieve
+      description: Signallar statistikasi
+      tags:
+      - signals
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Signal'
+          description: ''
+  /dashboard/subscriptions/:
+    get:
+      operationId: dashboard_subscriptions_list
+      description: Obunalar bilan ishlash uchun API
+      parameters:
+      - in: query
+        name: created_at_after
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: created_at_before
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: end_date
+        schema:
+          type: string
+        description: Tugash sanasi
+      - in: query
+        name: expires_at_after
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: expires_at_before
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+        description: Faol obunalar
+      - in: query
+        name: ordering
+        schema:
+          type: string
+        description: Tartiblash (-created_at, start_date)
+      - in: query
+        name: plan
+        schema:
+          type: string
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Qidirish
+      - in: query
+        name: start_date
+        schema:
+          type: string
+        description: Boshlanish sanasi
+      - in: query
+        name: user
+        schema:
+          type: string
+      tags:
+      - subscriptions
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Subscription'
+          description: ''
+    post:
+      operationId: dashboard_subscriptions_create
+      description: Obunalar bilan ishlash uchun API
+      tags:
+      - subscriptions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SubscriptionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SubscriptionRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+          description: ''
+  /dashboard/subscriptions/{id}/:
+    get:
+      operationId: dashboard_subscriptions_retrieve
+      description: Obunalar bilan ishlash uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Obuna.
+        required: true
+      tags:
+      - subscriptions
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+          description: ''
+    put:
+      operationId: dashboard_subscriptions_update
+      description: Obunalar bilan ishlash uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Obuna.
+        required: true
+      tags:
+      - subscriptions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SubscriptionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SubscriptionRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+          description: ''
+    patch:
+      operationId: dashboard_subscriptions_partial_update
+      description: Obunalar bilan ishlash uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Obuna.
+        required: true
+      tags:
+      - subscriptions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSubscriptionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSubscriptionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSubscriptionRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+          description: ''
+    delete:
+      operationId: dashboard_subscriptions_destroy
+      description: Obunalar bilan ishlash uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Obuna.
+        required: true
+      tags:
+      - subscriptions
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '204':
+          description: No response body
+  /dashboard/subscriptions/stats/:
+    get:
+      operationId: dashboard_subscriptions_stats_retrieve
+      description: Obunalar statistikasi
+      tags:
+      - subscriptions
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+          description: ''
+  /dashboard/users/:
+    get:
+      operationId: dashboard_users_list
+      description: Barcha foydalanuvchilarni ko'rish. Telegram foydalanuvchilarini
+        ko'rish uchun ?telegram_only=true parametrini qo'shing
+      summary: Foydalanuvchilar ro'yxati
+      parameters:
+      - in: query
+        name: created_at_after
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: created_at_before
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: email
+        schema:
+          type: string
+      - in: query
+        name: first_name
+        schema:
+          type: string
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+        description: Faol foydalanuvchilarni ko'rish
+      - in: query
+        name: is_admin
+        schema:
+          type: boolean
+        description: Admin foydalanuvchilarni ko'rish
+      - in: query
+        name: is_blocked
+        schema:
+          type: boolean
+      - in: query
+        name: is_verified
+        schema:
+          type: boolean
+      - in: query
+        name: last_name
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: phone
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: telegram_only
+        schema:
+          type: boolean
+        description: Faqat Telegram foydalanuvchilarini ko'rish
+      - in: query
+        name: username
+        schema:
+          type: string
+      tags:
+      - users
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+          description: ''
+    post:
+      operationId: dashboard_users_create
+      description: Foydalanuvchilar bilan ishlash uchun API
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /dashboard/users/{id}/:
+    get:
+      operationId: dashboard_users_retrieve
+      description: Foydalanuvchilar bilan ishlash uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Foydalanuvchi.
+        required: true
+      tags:
+      - users
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    put:
+      operationId: dashboard_users_update
+      description: Foydalanuvchilar bilan ishlash uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Foydalanuvchi.
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    patch:
+      operationId: dashboard_users_partial_update
+      description: Foydalanuvchilar bilan ishlash uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Foydalanuvchi.
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    delete:
+      operationId: dashboard_users_destroy
+      description: Foydalanuvchilar bilan ishlash uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Foydalanuvchi.
+        required: true
+      tags:
+      - users
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '204':
+          description: No response body
+  /dashboard/users/stats/:
+    get:
+      operationId: dashboard_users_stats_retrieve
+      description: Foydalanuvchilar statistikasi
+      tags:
+      - users
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /instruments/:
+    get:
+      operationId: instruments_list
+      tags:
+      - instruments
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Instrument'
+          description: ''
+    post:
+      operationId: instruments_create
+      tags:
+      - instruments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstrumentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InstrumentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InstrumentRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Instrument'
+          description: ''
+  /instruments/{id}/:
+    get:
+      operationId: instruments_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Instrument.
+        required: true
+      tags:
+      - instruments
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Instrument'
+          description: ''
+    put:
+      operationId: instruments_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Instrument.
+        required: true
+      tags:
+      - instruments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstrumentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InstrumentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InstrumentRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Instrument'
+          description: ''
+    patch:
+      operationId: instruments_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Instrument.
+        required: true
+      tags:
+      - instruments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedInstrumentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedInstrumentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedInstrumentRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Instrument'
+          description: ''
+    delete:
+      operationId: instruments_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Instrument.
+        required: true
+      tags:
+      - instruments
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '204':
+          description: No response body
+  /reviews/{id}/:
+    get:
+      operationId: reviews_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - reviews
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+          description: ''
+    put:
+      operationId: reviews_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - reviews
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReviewRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReviewRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+          description: ''
+    patch:
+      operationId: reviews_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - reviews
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedReviewRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedReviewRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedReviewRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+          description: ''
+    delete:
+      operationId: reviews_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - reviews
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '204':
+          description: No response body
+  /reviews/{id}/update/:
+    post:
+      operationId: reviews_update_create
+      description: Admin tomonidan sharhni tasdiqlash yoki rad etish
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - reviews
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewAdminUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReviewAdminUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReviewAdminUpdateRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+          description: ''
+  /reviews/create/:
+    post:
+      operationId: reviews_create_create
+      tags:
+      - reviews
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReviewRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReviewRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+          description: ''
+  /reviews/list/:
+    get:
+      operationId: reviews_list_list
+      tags:
+      - reviews
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+          description: ''
+  /signals/signals/:
+    get:
+      operationId: signals_signals_list
+      description: Signallar bilan ishlash uchun API
+      parameters:
+      - in: query
+        name: created_at_after
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: created_at_before
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: created_by
+        schema:
+          type: integer
+      - in: query
+        name: instrument
+        schema:
+          type: integer
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - in: query
+        name: is_sent
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: signal_type
+        schema:
+          type: string
+          title: Signal turi
+          enum:
+          - BUY
+          - SELL
+        description: |-
+          * `BUY` - Sotib olish
+          * `SELL` - Sotish
+      - in: query
+        name: success_rate_max
+        schema:
+          type: number
+          format: float
+      - in: query
+        name: success_rate_min
+        schema:
+          type: number
+          format: float
+      tags:
+      - signals
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Signal'
+          description: ''
+    post:
+      operationId: signals_signals_create
+      description: Signallar bilan ishlash uchun API
+      tags:
+      - signals
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignalCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SignalCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SignalCreateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignalCreate'
+          description: ''
+  /signals/signals/{id}/:
+    get:
+      operationId: signals_signals_retrieve
+      description: Signallar bilan ishlash uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Signal.
+        required: true
+      tags:
+      - signals
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Signal'
+          description: ''
+    put:
+      operationId: signals_signals_update
+      description: Signallar bilan ishlash uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Signal.
+        required: true
+      tags:
+      - signals
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignalCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SignalCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SignalCreateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignalCreate'
+          description: ''
+    patch:
+      operationId: signals_signals_partial_update
+      description: Signallar bilan ishlash uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Signal.
+        required: true
+      tags:
+      - signals
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSignalCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSignalCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSignalCreateRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignalCreate'
+          description: ''
+    delete:
+      operationId: signals_signals_destroy
+      description: Signallar bilan ishlash uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Signal.
+        required: true
+      tags:
+      - signals
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '204':
+          description: No response body
+  /signals/signals/{id}/send/:
+    post:
+      operationId: signals_signals_send_create
+      description: Signalni telegram kanaliga yuborish
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Signal.
+        required: true
+      tags:
+      - signals
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignalRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SignalRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SignalRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Signal'
+          description: ''
+  /subscriptions/payment-methods/:
+    get:
+      operationId: subscriptions_payment_methods_list
+      description: Barcha mavjud to'lov usullarini ko'rish
+      summary: To'lov usullarini ko'rish
+      tags:
+      - subscriptions
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaymentMethod'
+          description: ''
+  /subscriptions/payment-methods/{id}/:
+    get:
+      operationId: subscriptions_payment_methods_retrieve
+      description: Tanlangan to'lov usuli haqida to'liq ma'lumot
+      summary: To'lov usuli ma'lumotlari
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this To'lov usuli.
+        required: true
+      tags:
+      - subscriptions
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethod'
+          description: ''
+  /subscriptions/payments/:
+    get:
+      operationId: subscriptions_payments_list
+      description: Foydalanuvchining barcha to'lovlarini ko'rish
+      summary: To'lovlarni ko'rish
+      tags:
+      - subscriptions
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Payment'
+          description: ''
+    post:
+      operationId: subscriptions_payments_create
+      description: Yangi to'lov uchun so'rov yuborish
+      summary: Yangi to'lov yaratish
+      tags:
+      - subscriptions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PaymentCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PaymentCreateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentCreate'
+          description: ''
+  /subscriptions/payments/{id}/:
+    get:
+      operationId: subscriptions_payments_retrieve
+      description: Tanlangan to'lov haqida to'liq ma'lumot
+      summary: To'lov ma'lumotlari
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - subscriptions
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+    put:
+      operationId: subscriptions_payments_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - subscriptions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+    patch:
+      operationId: subscriptions_payments_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - subscriptions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPaymentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPaymentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPaymentRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+    delete:
+      operationId: subscriptions_payments_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - subscriptions
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '204':
+          description: No response body
+  /subscriptions/payments/{id}/approve/:
+    post:
+      operationId: subscriptions_payments_approve_create
+      description: Admin tomonidan to'lovni tasdiqlash
+      summary: To'lovni tasdiqlash
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - subscriptions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+  /subscriptions/payments/{id}/reject/:
+    post:
+      operationId: subscriptions_payments_reject_create
+      description: Admin tomonidan to'lovni rad etish
+      summary: To'lovni rad etish
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - subscriptions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+  /subscriptions/plans/:
+    get:
+      operationId: subscriptions_plans_list
+      description: Barcha mavjud obuna rejalarini ko'rish
+      summary: Obuna rejalarini ko'rish
+      tags:
+      - subscriptions
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubscriptionPlan'
+          description: ''
+  /subscriptions/plans/{id}/:
+    get:
+      operationId: subscriptions_plans_retrieve
+      description: Tanlangan obuna rejasi haqida to'liq ma'lumot
+      summary: Obuna rejasi ma'lumotlari
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Obuna rejasi.
+        required: true
+      tags:
+      - subscriptions
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionPlan'
+          description: ''
+  /subscriptions/subscriptions/:
+    get:
+      operationId: subscriptions_subscriptions_list
+      description: Foydalanuvchining barcha obunalarini ko'rish
+      summary: Obunalarni ko'rish
+      tags:
+      - subscriptions
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Subscription'
+          description: ''
+    post:
+      operationId: subscriptions_subscriptions_create
+      description: Yangi obuna uchun so'rov yuborish
+      summary: Yangi obuna yaratish
+      tags:
+      - subscriptions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SubscriptionCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SubscriptionCreateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionCreate'
+          description: ''
+  /subscriptions/subscriptions/{id}/:
+    get:
+      operationId: subscriptions_subscriptions_retrieve
+      description: Tanlangan obuna haqida to'liq ma'lumot
+      summary: Obuna ma'lumotlari
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - subscriptions
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+          description: ''
+    put:
+      operationId: subscriptions_subscriptions_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - subscriptions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SubscriptionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SubscriptionRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+          description: ''
+    patch:
+      operationId: subscriptions_subscriptions_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - subscriptions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSubscriptionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSubscriptionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSubscriptionRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+          description: ''
+    delete:
+      operationId: subscriptions_subscriptions_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - subscriptions
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '204':
+          description: No response body
+  /users/auth/permissions/:
+    get:
+      operationId: users_auth_permissions_retrieve
+      description: |-
+        Foydalanuvchining ruxsatlari va menu elementlarini qaytaradi.
+        Frontend uchun sidebar va permission checking qilish uchun ishlatiladi.
+      tags:
+      - auth
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  permissions:
+                    type: array
+                    items:
+                      type: string
+                  is_admin:
+                    type: boolean
+                  menu_items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        title:
+                          type: string
+                        path:
+                          type: string
+                        icon:
+                          type: string
+                        permissions:
+                          type: array
+                          items:
+                            type: string
+          description: ''
+  /users/auth/token/:
+    post:
+      operationId: users_auth_token_create
+      description: |-
+        Token olish uchun view
+
+        Username va password orqali access va refresh tokenlarni olish
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access:
+                    type: string
+                  refresh:
+                    type: string
+                  user:
+                    type: object
+          description: ''
+  /users/auth/token/refresh/:
+    post:
+      operationId: users_auth_token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /users/auth/verify-me/:
+    get:
+      operationId: users_auth_verify_me_retrieve
+      description: Joriy foydalanuvchi ma'lumotlarini olish
+      tags:
+      - auth
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /users/groups/:
+    get:
+      operationId: users_groups_list
+      description: Guruhlarni boshqarish uchun API
+      tags:
+      - users
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Group'
+          description: ''
+    post:
+      operationId: users_groups_create
+      description: Guruhlarni boshqarish uchun API
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupCreateUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GroupCreateUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GroupCreateUpdateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupCreateUpdate'
+          description: ''
+  /users/groups/{id}/:
+    get:
+      operationId: users_groups_retrieve
+      description: Guruhlarni boshqarish uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this group.
+        required: true
+      tags:
+      - users
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+          description: ''
+    put:
+      operationId: users_groups_update
+      description: Guruhlarni boshqarish uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this group.
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupCreateUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GroupCreateUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GroupCreateUpdateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupCreateUpdate'
+          description: ''
+    patch:
+      operationId: users_groups_partial_update
+      description: Guruhlarni boshqarish uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this group.
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedGroupCreateUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedGroupCreateUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedGroupCreateUpdateRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupCreateUpdate'
+          description: ''
+    delete:
+      operationId: users_groups_destroy
+      description: Guruhlarni boshqarish uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this group.
+        required: true
+      tags:
+      - users
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '204':
+          description: No response body
+  /users/groups/{id}/add_permissions/:
+    post:
+      operationId: users_groups_add_permissions_create
+      description: Guruhlarni boshqarish uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this group.
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GroupRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GroupRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+          description: ''
+  /users/groups/{id}/remove_permissions/:
+    post:
+      operationId: users_groups_remove_permissions_create
+      description: Guruhlarni boshqarish uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this group.
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GroupRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GroupRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+          description: ''
+  /users/permissions/:
+    get:
+      operationId: users_permissions_list
+      description: Ruxsatlarni ko'rish uchun API
+      tags:
+      - users
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Permission'
+          description: ''
+  /users/permissions/{id}/:
+    get:
+      operationId: users_permissions_retrieve
+      description: Ruxsatlarni ko'rish uchun API
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this permission.
+        required: true
+      tags:
+      - users
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+          description: ''
+  /users/permissions/apps/:
+    get:
+      operationId: users_permissions_apps_retrieve
+      description: Mavjud app'lar ro'yxatini qaytaradi
+      tags:
+      - users
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+          description: ''
+  /users/permissions/models/:
+    get:
+      operationId: users_permissions_models_retrieve
+      description: App ichidagi modellar ro'yxatini qaytaradi
+      tags:
+      - users
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+          description: ''
+  /users/users/:
+    get:
+      operationId: users_users_list
+      description: Barcha foydalanuvchilarni ko'rish
+      summary: Foydalanuvchilar ro'yxati
+      tags:
+      - users
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+          description: ''
+    post:
+      operationId: users_users_create
+      description: Admin uchun yangi foydalanuvchi yaratish
+      summary: Yangi foydalanuvchi yaratish
+      tags:
+      - users-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserCreate'
+          description: ''
+  /users/users/{id}/:
+    get:
+      operationId: users_users_retrieve
+      description: Foydalanuvchi haqida to'liq ma'lumot
+      summary: Foydalanuvchi ma'lumotlari
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Foydalanuvchi.
+        required: true
+      tags:
+      - users
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    put:
+      operationId: users_users_update
+      description: Admin uchun foydalanuvchi ma'lumotlarini yangilash
+      summary: Foydalanuvchini yangilash
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Foydalanuvchi.
+        required: true
+      tags:
+      - users-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUpdate'
+          description: ''
+    patch:
+      operationId: users_users_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Foydalanuvchi.
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserUpdateRequest'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserUpdate'
+          description: ''
+    delete:
+      operationId: users_users_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Foydalanuvchi.
+        required: true
+      tags:
+      - users
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '204':
+          description: No response body
+  /users/users/{id}/add_permissions/:
+    post:
+      operationId: users_users_add_permissions_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Foydalanuvchi.
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /users/users/{id}/add_to_groups/:
+    post:
+      operationId: users_users_add_to_groups_create
+      description: Foydalanuvchini berilgan guruhlarga qo'shish
+      summary: Foydalanuvchini guruhlarga qo'shish
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Foydalanuvchi.
+        required: true
+      tags:
+      - users-admin
+      requestBody:
+        content:
+          type:
+            schema:
+              type: object
+              additionalProperties: {}
+              description: Unspecified request body
+          properties:
+            schema:
+              groups:
+                type: array
+                items:
+                  type: integer
+                description: Guruh IDlari
+          required:
+            schema:
+              type: object
+              additionalProperties: {}
+              description: Unspecified request body
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  added_groups:
+                    type: array
+                    items:
+                      type: string
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Noto'g'ri so'rov
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                description: Guruh topilmadi
+          description: ''
+  /users/users/{id}/block_user/:
+    post:
+      operationId: users_users_block_user_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Foydalanuvchi.
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /users/users/{id}/remove_from_groups/:
+    post:
+      operationId: users_users_remove_from_groups_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Foydalanuvchi.
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /users/users/{id}/remove_permissions/:
+    post:
+      operationId: users_users_remove_permissions_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Foydalanuvchi.
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /users/users/{id}/unblock_user/:
+    post:
+      operationId: users_users_unblock_user_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Foydalanuvchi.
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+components:
+  schemas:
+    BroadcastMessage:
+      type: object
+      description: Xabar yuborish uchun serializer
+      properties:
+        message:
+          type: string
+        users:
+          type: array
+          items:
+            type: integer
+      required:
+      - message
+    BroadcastMessageRequest:
+      type: object
+      description: Xabar yuborish uchun serializer
+      properties:
+        message:
+          type: string
+          minLength: 1
+        users:
+          type: array
+          items:
+            type: integer
+      required:
+      - message
+    ContentType:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        app_label:
+          type: string
+          maxLength: 100
+        model:
+          type: string
+          title: Python model class name
+          maxLength: 100
+      required:
+      - app_label
+      - id
+      - model
+    ContentTypeRequest:
+      type: object
+      properties:
+        app_label:
+          type: string
+          minLength: 1
+          maxLength: 100
+        model:
+          type: string
+          minLength: 1
+          title: Python model class name
+          maxLength: 100
+      required:
+      - app_label
+      - model
+    Group:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 150
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+          readOnly: true
+      required:
+      - id
+      - name
+      - permissions
+    GroupCreateUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 150
+        permissions:
+          type: array
+          items:
+            type: integer
+      required:
+      - name
+      - permissions
+    GroupCreateUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        permissions:
+          type: array
+          items:
+            type: integer
+      required:
+      - name
+      - permissions
+    GroupRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+      required:
+      - name
+    Instrument:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        symbol:
+          type: string
+          maxLength: 20
+        description:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - symbol
+      - updated_at
+    InstrumentRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        symbol:
+          type: string
+          minLength: 1
+          maxLength: 20
+        description:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+      required:
+      - name
+      - symbol
+    PatchedGroupCreateUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        permissions:
+          type: array
+          items:
+            type: integer
+    PatchedInstrumentRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        symbol:
+          type: string
+          minLength: 1
+          maxLength: 20
+        description:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+    PatchedPaymentRequest:
+      type: object
+      properties:
+        subscription_plan:
+          type: integer
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        screenshot:
+          type: string
+          format: binary
+          nullable: true
+        description:
+          type: string
+          nullable: true
+    PatchedReviewRequest:
+      type: object
+      properties:
+        comment:
+          type: string
+          nullable: true
+        rating:
+          type: integer
+    PatchedSignalCreateRequest:
+      type: object
+      description: Signal yaratish uchun serializer
+      properties:
+        instrument:
+          type: integer
+        signal_type:
+          allOf:
+          - $ref: '#/components/schemas/SignalTypeEnum'
+          title: Signal turi
+        description:
+          type: string
+          nullable: true
+          title: Tavsif
+        image:
+          type: string
+          format: binary
+          nullable: true
+          title: Rasm
+        entry_points:
+          type: array
+          items:
+            $ref: '#/components/schemas/PricePointRequest'
+        take_profits:
+          type: array
+          items:
+            $ref: '#/components/schemas/PricePointRequest'
+        stop_losses:
+          type: array
+          items:
+            $ref: '#/components/schemas/PricePointRequest'
+    PatchedSignalRequest:
+      type: object
+      description: Signal ko'rish uchun serializer
+      properties:
+        instrument:
+          type: integer
+        signal_type:
+          allOf:
+          - $ref: '#/components/schemas/SignalTypeEnum'
+          title: Signal turi
+        description:
+          type: string
+          nullable: true
+          title: Tavsif
+        image:
+          type: string
+          format: binary
+          nullable: true
+          title: Rasm
+        is_active:
+          type: boolean
+          title: Faol
+        is_sent:
+          type: boolean
+          title: Yuborilgan
+        success_rate:
+          type: number
+          format: double
+          title: Muvaffaqiyat darajasi
+        closed_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: Yopilgan vaqt
+    PatchedSubscriptionRequest:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/SubscriptionStatusEnum'
+        is_active:
+          type: boolean
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+    PatchedUserRequest:
+      type: object
+      description: Foydalanuvchi ma'lumotlari uchun serializer
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          title: Email address
+          maxLength: 254
+        first_name:
+          type: string
+          nullable: true
+          maxLength: 255
+        last_name:
+          type: string
+          nullable: true
+          maxLength: 255
+        phone_number:
+          type: string
+          nullable: true
+          maxLength: 255
+        is_active:
+          type: boolean
+        is_blocked:
+          type: boolean
+    PatchedUserUpdateRequest:
+      type: object
+      properties:
+        first_name:
+          type: string
+          nullable: true
+          maxLength: 255
+        last_name:
+          type: string
+          nullable: true
+          maxLength: 255
+        phone_number:
+          type: string
+          nullable: true
+          maxLength: 255
+        image_url:
+          type: string
+          nullable: true
+          maxLength: 255
+        is_blocked:
+          type: boolean
+    Payment:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/User'
+          readOnly: true
+        subscription_plan:
+          type: integer
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        payment_method:
+          allOf:
+          - $ref: '#/components/schemas/PaymentMethod'
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/PaymentStatusEnum'
+          readOnly: true
+        screenshot:
+          type: string
+          format: uri
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - payment_method
+      - status
+      - subscription_plan
+      - updated_at
+      - user
+    PaymentCreate:
+      type: object
+      properties:
+        subscription_plan:
+          type: integer
+        payment_method:
+          type: integer
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        screenshot:
+          type: string
+          format: uri
+          nullable: true
+        description:
+          type: string
+          nullable: true
+      required:
+      - payment_method
+      - subscription_plan
+    PaymentCreateRequest:
+      type: object
+      properties:
+        subscription_plan:
+          type: integer
+        payment_method:
+          type: integer
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        screenshot:
+          type: string
+          format: binary
+          nullable: true
+        description:
+          type: string
+          nullable: true
+      required:
+      - payment_method
+      - subscription_plan
+    PaymentMethod:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 50
+        number:
+          type: string
+          maxLength: 20
+        card_holder:
+          type: string
+          maxLength: 50
+        description:
+          type: string
+          nullable: true
+        is_default:
+          type: boolean
+      required:
+      - card_holder
+      - id
+      - name
+      - number
+    PaymentMethodRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        number:
+          type: string
+          minLength: 1
+          maxLength: 20
+        card_holder:
+          type: string
+          minLength: 1
+          maxLength: 50
+        description:
+          type: string
+          nullable: true
+        is_default:
+          type: boolean
+      required:
+      - card_holder
+      - name
+      - number
+    PaymentRequest:
+      type: object
+      properties:
+        subscription_plan:
+          type: integer
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        screenshot:
+          type: string
+          format: binary
+          nullable: true
+        description:
+          type: string
+          nullable: true
+      required:
+      - subscription_plan
+    PaymentStatusEnum:
+      enum:
+      - PENDING
+      - COMPLETED
+      - FAILED
+      - CANCELLED
+      type: string
+      description: |-
+        * `PENDING` - Kutilmoqda
+        * `COMPLETED` - Tasdiqlangan
+        * `FAILED` - Rad etilgan
+        * `CANCELLED` - Bekor qilingan
+    Permission:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        codename:
+          type: string
+          maxLength: 100
+        content_type:
+          allOf:
+          - $ref: '#/components/schemas/ContentType'
+          readOnly: true
+        app_label:
+          type: string
+          readOnly: true
+        model:
+          type: string
+          readOnly: true
+      required:
+      - app_label
+      - codename
+      - content_type
+      - id
+      - model
+      - name
+    PermissionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        codename:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+      - codename
+      - name
+    PricePoint:
+      type: object
+      properties:
+        price_type:
+          allOf:
+          - $ref: '#/components/schemas/PriceTypeEnum'
+          title: Narx turi
+        price:
+          type: string
+          title: Narx
+          maxLength: 50
+        order:
+          type: integer
+          title: Tartib raqami
+        description:
+          type: string
+          nullable: true
+          title: Izoh
+          maxLength: 255
+      required:
+      - price
+      - price_type
+    PricePointRequest:
+      type: object
+      properties:
+        price_type:
+          allOf:
+          - $ref: '#/components/schemas/PriceTypeEnum'
+          title: Narx turi
+        price:
+          type: string
+          minLength: 1
+          title: Narx
+          maxLength: 50
+        order:
+          type: integer
+          title: Tartib raqami
+        description:
+          type: string
+          nullable: true
+          title: Izoh
+          maxLength: 255
+      required:
+      - price
+      - price_type
+    PriceTypeEnum:
+      enum:
+      - ENTRY
+      - TP
+      - SL
+      type: string
+      description: |-
+        * `ENTRY` - Kirish narxi
+        * `TP` - Take-profit
+        * `SL` - Stop-loss
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: string
+          readOnly: true
+        comment:
+          type: string
+          nullable: true
+        rating:
+          type: integer
+        is_approved:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_admin:
+          type: string
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - is_approved
+      - updated_admin
+      - updated_at
+      - user
+    ReviewAdminUpdateRequest:
+      type: object
+      properties:
+        is_approved:
+          type: boolean
+    ReviewRequest:
+      type: object
+      properties:
+        comment:
+          type: string
+          nullable: true
+        rating:
+          type: integer
+    Signal:
+      type: object
+      description: Signal ko'rish uchun serializer
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        instrument:
+          type: integer
+        signal_type:
+          allOf:
+          - $ref: '#/components/schemas/SignalTypeEnum'
+          title: Signal turi
+        description:
+          type: string
+          nullable: true
+          title: Tavsif
+        image:
+          type: string
+          format: uri
+          nullable: true
+          title: Rasm
+        entry_points:
+          type: array
+          items:
+            $ref: '#/components/schemas/PricePoint'
+          readOnly: true
+        take_profits:
+          type: array
+          items:
+            $ref: '#/components/schemas/PricePoint'
+          readOnly: true
+        stop_losses:
+          type: array
+          items:
+            $ref: '#/components/schemas/PricePoint'
+          readOnly: true
+        is_active:
+          type: boolean
+          title: Faol
+        is_sent:
+          type: boolean
+          title: Yuborilgan
+        success_rate:
+          type: number
+          format: double
+          title: Muvaffaqiyat darajasi
+        risk_reward:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yaratilgan vaqt
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Yangilangan vaqt
+        closed_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: Yopilgan vaqt
+      required:
+      - created_at
+      - entry_points
+      - id
+      - instrument
+      - risk_reward
+      - signal_type
+      - stop_losses
+      - take_profits
+      - updated_at
+    SignalCreate:
+      type: object
+      description: Signal yaratish uchun serializer
+      properties:
+        instrument:
+          type: integer
+        signal_type:
+          allOf:
+          - $ref: '#/components/schemas/SignalTypeEnum'
+          title: Signal turi
+        description:
+          type: string
+          nullable: true
+          title: Tavsif
+        image:
+          type: string
+          format: uri
+          nullable: true
+          title: Rasm
+        entry_points:
+          type: array
+          items:
+            $ref: '#/components/schemas/PricePoint'
+        take_profits:
+          type: array
+          items:
+            $ref: '#/components/schemas/PricePoint'
+        stop_losses:
+          type: array
+          items:
+            $ref: '#/components/schemas/PricePoint'
+      required:
+      - instrument
+      - signal_type
+      - stop_losses
+      - take_profits
+    SignalCreateRequest:
+      type: object
+      description: Signal yaratish uchun serializer
+      properties:
+        instrument:
+          type: integer
+        signal_type:
+          allOf:
+          - $ref: '#/components/schemas/SignalTypeEnum'
+          title: Signal turi
+        description:
+          type: string
+          nullable: true
+          title: Tavsif
+        image:
+          type: string
+          format: binary
+          nullable: true
+          title: Rasm
+        entry_points:
+          type: array
+          items:
+            $ref: '#/components/schemas/PricePointRequest'
+        take_profits:
+          type: array
+          items:
+            $ref: '#/components/schemas/PricePointRequest'
+        stop_losses:
+          type: array
+          items:
+            $ref: '#/components/schemas/PricePointRequest'
+      required:
+      - instrument
+      - signal_type
+      - stop_losses
+      - take_profits
+    SignalRequest:
+      type: object
+      description: Signal ko'rish uchun serializer
+      properties:
+        instrument:
+          type: integer
+        signal_type:
+          allOf:
+          - $ref: '#/components/schemas/SignalTypeEnum'
+          title: Signal turi
+        description:
+          type: string
+          nullable: true
+          title: Tavsif
+        image:
+          type: string
+          format: binary
+          nullable: true
+          title: Rasm
+        is_active:
+          type: boolean
+          title: Faol
+        is_sent:
+          type: boolean
+          title: Yuborilgan
+        success_rate:
+          type: number
+          format: double
+          title: Muvaffaqiyat darajasi
+        closed_at:
+          type: string
+          format: date-time
+          nullable: true
+          title: Yopilgan vaqt
+      required:
+      - instrument
+      - signal_type
+    SignalTypeEnum:
+      enum:
+      - BUY
+      - SELL
+      type: string
+      description: |-
+        * `BUY` - Sotib olish
+        * `SELL` - Sotish
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/User'
+          readOnly: true
+        plan:
+          allOf:
+          - $ref: '#/components/schemas/SubscriptionPlan'
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/SubscriptionStatusEnum'
+        is_active:
+          type: boolean
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        days_left:
+          type: string
+          readOnly: true
+      required:
+      - created_at
+      - days_left
+      - id
+      - plan
+      - updated_at
+      - user
+    SubscriptionCreate:
+      type: object
+      properties:
+        plan:
+          type: integer
+      required:
+      - plan
+    SubscriptionCreateRequest:
+      type: object
+      properties:
+        plan:
+          type: integer
+      required:
+      - plan
+    SubscriptionPlan:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        duration_days:
+          type: integer
+        description:
+          type: string
+      required:
+      - duration_days
+      - id
+      - name
+      - price
+    SubscriptionPlanRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        duration_days:
+          type: integer
+        description:
+          type: string
+          minLength: 1
+      required:
+      - duration_days
+      - name
+      - price
+    SubscriptionRequest:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/SubscriptionStatusEnum'
+        is_active:
+          type: boolean
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+    SubscriptionStatusEnum:
+      enum:
+      - pending
+      - waiting_admin
+      - active
+      - expired
+      - cancelled
+      - rejected
+      type: string
+      description: |-
+        * `pending` - Kutilmoqda
+        * `waiting_admin` - Admin tasdiqlashi kutilmoqda
+        * `active` - Aktiv
+        * `expired` - Muddati tugagan
+        * `cancelled` - Bekor qilingan
+        * `rejected` - Rad etilgan
+    TokenObtainPairRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          writeOnly: true
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - password
+      - username
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+    TokenRefreshRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+          minLength: 1
+      required:
+      - refresh
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          maxLength: 150
+        first_name:
+          type: string
+          nullable: true
+          maxLength: 255
+        last_name:
+          type: string
+          nullable: true
+          maxLength: 255
+      required:
+      - id
+      - username
+    UserCreate:
+      type: object
+      properties:
+        username:
+          type: string
+          maxLength: 150
+        first_name:
+          type: string
+          nullable: true
+          maxLength: 255
+        last_name:
+          type: string
+          nullable: true
+          maxLength: 255
+        phone_number:
+          type: string
+          nullable: true
+          maxLength: 255
+        telegram_user_id:
+          type: string
+          nullable: true
+          maxLength: 100
+      required:
+      - username
+    UserCreateRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 150
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        first_name:
+          type: string
+          nullable: true
+          maxLength: 255
+        last_name:
+          type: string
+          nullable: true
+          maxLength: 255
+        phone_number:
+          type: string
+          nullable: true
+          maxLength: 255
+        telegram_user_id:
+          type: string
+          nullable: true
+          maxLength: 100
+      required:
+      - password
+      - username
+    UserRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 150
+        first_name:
+          type: string
+          nullable: true
+          maxLength: 255
+        last_name:
+          type: string
+          nullable: true
+          maxLength: 255
+      required:
+      - username
+    UserUpdate:
+      type: object
+      properties:
+        first_name:
+          type: string
+          nullable: true
+          maxLength: 255
+        last_name:
+          type: string
+          nullable: true
+          maxLength: 255
+        phone_number:
+          type: string
+          nullable: true
+          maxLength: 255
+        image_url:
+          type: string
+          nullable: true
+          maxLength: 255
+        is_blocked:
+          type: boolean
+    UserUpdateRequest:
+      type: object
+      properties:
+        first_name:
+          type: string
+          nullable: true
+          maxLength: 255
+        last_name:
+          type: string
+          nullable: true
+          maxLength: 255
+        phone_number:
+          type: string
+          nullable: true
+          maxLength: 255
+        image_url:
+          type: string
+          nullable: true
+          maxLength: 255
+        is_blocked:
+          type: boolean
+    UserVerify:
+      type: object
+      description: Foydalanuvchi tekshirish uchun serializer
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          maxLength: 150
+        is_active:
+          type: boolean
+        is_admin:
+          type: boolean
+      required:
+      - id
+      - username
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+tags:
+- name: users
+  description: Foydalanuvchilar
+- name: signals
+  description: Signallar
+- name: subscriptions
+  description: Obunalar
+- name: reviews
+  description: Sharhlar
+- name: instruments
+  description: Instrumentlar
+- name: broadcast
+  description: Xabarlar
+- name: dashboard
+  description: Dashboard

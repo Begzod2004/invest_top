@@ -7,6 +7,10 @@ import requests
 import logging
 from asgiref.sync import sync_to_async
 from django.core.exceptions import ValidationError
+from django.utils import timezone
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -37,12 +41,6 @@ class PricePoint(models.Model):
         default=0,
         verbose_name=_('Tartib raqami')
     )
-    description = models.CharField(
-        max_length=255,
-        null=True,
-        blank=True,
-        verbose_name=_('Izoh')
-    )
     is_reached = models.BooleanField(
         default=False,
         verbose_name=_('Yetib borildimi')
@@ -56,10 +54,15 @@ class PricePoint(models.Model):
     class Meta:
         verbose_name = _('Narx nuqtasi')
         verbose_name_plural = _('Narx nuqtalari')
-        ordering = ['order']
+        ordering = ['price_type', 'order']
 
     def __str__(self):
         return f"{self.get_price_type_display()}: {self.price}"
+
+    def save(self, *args, **kwargs):
+        if self.is_reached and not self.reached_at:
+            self.reached_at = timezone.now()
+        super().save(*args, **kwargs)
 
 class Signal(models.Model):
     """Signal modeli"""
@@ -156,7 +159,7 @@ class Signal(models.Model):
 
     def calculate_risk_reward(self):
         """Risk/Reward nisbatini hisoblash"""
-        try:
+        try:    
             # Birinchi entry point va TP/SL larni olish
             entry = self.entry_points.first()
             tp = self.take_profits.first()
@@ -256,8 +259,13 @@ class Signal(models.Model):
                 response = requests.post(message_url, data=data)
             
             if response.status_code == 200:
-                self.is_sent = True
-                await sync_to_async(self.save)()
+                # Status yangilash - to'g'ridan-to'g'ri bazada
+                from django.db import connection
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "UPDATE signals_signal SET is_sent = TRUE WHERE id = %s",
+                        [self.id]
+                    )
                 logger.info(f"Signal #{self.id} muvaffaqiyatli yuborildi")
                 return True
             else:
@@ -269,3 +277,37 @@ class Signal(models.Model):
             error_msg = f"Signal yuborishda xatolik: {str(e)}"
             logger.error(error_msg)
             raise ValidationError(error_msg)
+
+    def save(self, *args, **kwargs):
+        """Signal saqlash metodi"""
+        is_new = self._state.adding  # Yangi signal yaratilayotganini tekshirish
+        skip_send = kwargs.pop('skip_send', False)
+        should_send = (is_new or not self.is_sent) and not skip_send
+        
+        super().save(*args, **kwargs)
+        
+        if should_send:
+            try:
+                # Signalni yuborish
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    loop.run_until_complete(self.send_to_telegram())
+                finally:
+                    loop.close()
+            except Exception as e:
+                logger.error(f"Signal yuborishda xatolik: {str(e)}")
+
+@receiver(post_save, sender=Signal)
+def send_pending_signals(sender, instance, created, **kwargs):
+    """Yuborilmagan signallarni yuborish"""
+    if not created and not instance.is_sent:
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                loop.run_until_complete(instance.send_to_telegram())
+            finally:
+                loop.close()
+        except Exception as e:
+            logger.error(f"Signal yuborishda xatolik: {str(e)}")

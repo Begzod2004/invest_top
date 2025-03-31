@@ -1,111 +1,101 @@
 from django_filters import rest_framework as filters
-from apps.users.models import User
+from django.contrib.auth import get_user_model
+from django.db.models import Q
+
 from apps.signals.models import Signal
 from apps.subscriptions.models import Subscription
-from apps.payments.models import Payment
 from apps.reviews.models import Review
 from apps.instruments.models import Instrument
-from django.utils import timezone
+
+User = get_user_model()
 
 class UserFilter(filters.FilterSet):
-    """
-    Foydalanuvchilarni filtrlash uchun filter
-    """
+    """User modelini filterlash uchun"""
     username = filters.CharFilter(lookup_expr='icontains')
+    email = filters.CharFilter(lookup_expr='icontains')
     first_name = filters.CharFilter(lookup_expr='icontains')
     last_name = filters.CharFilter(lookup_expr='icontains')
-    phone_number = filters.CharFilter(lookup_expr='icontains')
-    telegram_user_id = filters.CharFilter(lookup_expr='icontains')
+    phone = filters.CharFilter(lookup_expr='icontains')
     is_active = filters.BooleanFilter()
-    is_staff = filters.BooleanFilter()
-    balance_min = filters.NumberFilter(field_name='balance', lookup_expr='gte')
-    balance_max = filters.NumberFilter(field_name='balance', lookup_expr='lte')
-    date_joined_after = filters.DateTimeFilter(field_name='date_joined', lookup_expr='gte')
-    date_joined_before = filters.DateTimeFilter(field_name='date_joined', lookup_expr='lte')
-    has_subscription = filters.BooleanFilter(method='filter_has_subscription')
+    is_blocked = filters.BooleanFilter()
+    is_verified = filters.BooleanFilter()
+    created_at_after = filters.DateTimeFilter(field_name='created_at', lookup_expr='gte')
+    created_at_before = filters.DateTimeFilter(field_name='created_at', lookup_expr='lte')
     
     class Meta:
         model = User
         fields = [
-            'username', 'first_name', 'last_name', 'phone_number',
-            'telegram_user_id', 'is_active', 'is_staff'
+            'username', 'email', 'first_name', 'last_name', 'phone',
+            'is_active', 'is_blocked', 'is_verified',
+            'created_at_after', 'created_at_before'
         ]
-        
-    def filter_has_subscription(self, queryset, name, value):
-        """Obunasi bor/yo'q foydalanuvchilarni filtrlash"""
-        if value:
-            return queryset.filter(
-                subscriptions__is_active=True,
-                subscriptions__expires_at__gt=timezone.now()
-            )
-        return queryset.exclude(
-            subscriptions__is_active=True,
-            subscriptions__expires_at__gt=timezone.now()
-        )
 
 class SignalFilter(filters.FilterSet):
-    created_at = filters.DateFromToRangeFilter()
-    updated_at = filters.DateFromToRangeFilter()
-    signal_type = filters.ChoiceFilter(choices=Signal.SIGNAL_TYPES)
-    entry_price = filters.RangeFilter()
-    take_profit = filters.RangeFilter()
-    stop_loss = filters.RangeFilter()
+    """Signal modelini filterlash uchun"""
+    user = filters.CharFilter(field_name='created_by__username', lookup_expr='icontains')
+    symbol = filters.CharFilter(field_name='instrument__name', lookup_expr='icontains')
+    type = filters.ChoiceFilter(field_name='signal_type', choices=Signal.SIGNAL_TYPES)
     is_active = filters.BooleanFilter()
     is_sent = filters.BooleanFilter()
-    instrument = filters.CharFilter(field_name='instrument__name', lookup_expr='icontains')
-    created_by = filters.NumberFilter(field_name='created_by__id')
+    success_rate_min = filters.NumberFilter(field_name='success_rate', lookup_expr='gte')
+    success_rate_max = filters.NumberFilter(field_name='success_rate', lookup_expr='lte')
+    created_at_after = filters.DateTimeFilter(field_name='created_at', lookup_expr='gte')
+    created_at_before = filters.DateTimeFilter(field_name='created_at', lookup_expr='lte')
     
     class Meta:
         model = Signal
-        fields = ['created_at', 'updated_at', 'signal_type', 'entry_price', 
-                 'take_profit', 'stop_loss', 'is_active', 'is_sent', 
-                 'instrument', 'created_by']
+        fields = [
+            'user', 'symbol', 'type', 'is_active', 'is_sent',
+            'success_rate_min', 'success_rate_max',
+            'created_at_after', 'created_at_before'
+        ]
 
 class SubscriptionFilter(filters.FilterSet):
-    start_date = filters.DateFromToRangeFilter()
-    end_date = filters.DateFromToRangeFilter()
-    created_at = filters.DateFromToRangeFilter()
-    is_active = filters.BooleanFilter()
+    """Subscription modelini filterlash uchun"""
     user = filters.CharFilter(field_name='user__username', lookup_expr='icontains')
     plan = filters.CharFilter(field_name='plan__name', lookup_expr='icontains')
+    is_active = filters.BooleanFilter()
+    expires_at_after = filters.DateTimeFilter(field_name='expires_at', lookup_expr='gte')
+    expires_at_before = filters.DateTimeFilter(field_name='expires_at', lookup_expr='lte')
+    created_at_after = filters.DateTimeFilter(field_name='created_at', lookup_expr='gte')
+    created_at_before = filters.DateTimeFilter(field_name='created_at', lookup_expr='lte')
     
     class Meta:
         model = Subscription
-        fields = ['start_date', 'end_date', 'created_at', 'is_active', 
-                 'user', 'plan']
-
-class PaymentFilter(filters.FilterSet):
-    created_at = filters.DateFromToRangeFilter()
-    updated_at = filters.DateFromToRangeFilter()
-    amount = filters.RangeFilter()
-    payment_type = filters.ChoiceFilter(choices=Payment.PAYMENT_TYPES)
-    status = filters.ChoiceFilter(choices=Payment.STATUS_CHOICES)
-    user = filters.CharFilter(field_name='user__username', lookup_expr='icontains')
-    subscription_plan = filters.CharFilter(field_name='subscription_plan__name', lookup_expr='icontains')
-    
-    class Meta:
-        model = Payment
-        fields = ['created_at', 'updated_at', 'amount', 'payment_type', 
-                 'status', 'user', 'subscription_plan']
+        fields = [
+            'user', 'plan', 'is_active',
+            'expires_at_after', 'expires_at_before',
+            'created_at_after', 'created_at_before'
+        ]
 
 class ReviewFilter(filters.FilterSet):
-    created_at = filters.DateFromToRangeFilter()
-    updated_at = filters.DateFromToRangeFilter()
-    rating = filters.RangeFilter()
-    is_approved = filters.BooleanFilter()
+    """Review modelini filterlash uchun"""
     user = filters.CharFilter(field_name='user__username', lookup_expr='icontains')
-    comment = filters.CharFilter(lookup_expr='icontains')
+    rating = filters.NumberFilter()
+    rating_min = filters.NumberFilter(field_name='rating', lookup_expr='gte')
+    rating_max = filters.NumberFilter(field_name='rating', lookup_expr='lte')
+    is_approved = filters.BooleanFilter()
+    created_at_after = filters.DateTimeFilter(field_name='created_at', lookup_expr='gte')
+    created_at_before = filters.DateTimeFilter(field_name='created_at', lookup_expr='lte')
     
     class Meta:
         model = Review
-        fields = ['created_at', 'updated_at', 'rating', 'is_approved', 'user', 'comment']
+        fields = [
+            'user', 'rating', 'rating_min', 'rating_max', 'is_approved',
+            'created_at_after', 'created_at_before'
+        ]
 
 class InstrumentFilter(filters.FilterSet):
+    """Instrument modelini filterlash uchun"""
     name = filters.CharFilter(lookup_expr='icontains')
     symbol = filters.CharFilter(lookup_expr='icontains')
     is_active = filters.BooleanFilter()
-    created_at = filters.DateFromToRangeFilter()
-    
+    created_at_after = filters.DateTimeFilter(field_name='created_at', lookup_expr='gte')
+    created_at_before = filters.DateTimeFilter(field_name='created_at', lookup_expr='lte')
+
     class Meta:
         model = Instrument
-        fields = ['name', 'symbol', 'is_active', 'created_at'] 
+        fields = [
+            'name', 'symbol', 'is_active',
+            'created_at_after', 'created_at_before'
+        ] 

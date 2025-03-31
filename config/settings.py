@@ -18,7 +18,7 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 
 # Application definition
 INSTALLED_APPS = [
-    # Django contrib apps
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -26,21 +26,19 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
-    # Third-party apps
+    # Third party apps
     'rest_framework',
     'rest_framework_simplejwt',
-    'drf_spectacular',
-    'drf_spectacular_sidecar',
-    'corsheaders',
     'django_filters',
-
-    # Project apps
+    'corsheaders',
+    'drf_spectacular',
+    
+    # Local apps
     'apps.users',
-    'apps.instruments',
-    'apps.payments',
-    'apps.reviews',
     'apps.signals',
     'apps.subscriptions',
+    'apps.reviews',
+    'apps.instruments',
     'apps.invest_bot',
     'apps.dashboard',
 ]
@@ -227,31 +225,17 @@ CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 
 # Spectacular settings
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Top Invest API',
-    'DESCRIPTION': 'Top Invest platformasi uchun API dokumentatsiya',
-    'VERSION': '1.0.0',
+    'TITLE': os.getenv('API_TITLE', 'Top Invest API'),
+    'DESCRIPTION': os.getenv('API_DESCRIPTION', 'Top Invest API Documentation'),
+    'VERSION': os.getenv('API_VERSION', '1.0.0'),
     'SERVE_INCLUDE_SCHEMA': False,
-    'REDOC_DIST': 'drf_spectacular_sidecar.redoc',
-    'SWAGGER_UI_SETTINGS': {
-        'deepLinking': True,
-        'persistAuthorization': True,
-        'displayOperationId': True,
-    },
-    'SECURITY': [
-        {
-            'Bearer': {
-                'type': 'apiKey',
-                'name': 'Authorization',
-                'in': 'header'
-            }
-        }
-    ],
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SCHEMA_PATH_PREFIX': '/api/',
+    'SCHEMA_COERCE_PATH_PK_SUFFIX': True,
     'TAGS': [
-        {'name': 'auth', 'description': 'Autentifikatsiya'},
         {'name': 'users', 'description': 'Foydalanuvchilar'},
         {'name': 'signals', 'description': 'Signallar'},
         {'name': 'subscriptions', 'description': 'Obunalar'},
-        {'name': 'payments', 'description': 'To\'lovlar'},
         {'name': 'reviews', 'description': 'Sharhlar'},
         {'name': 'instruments', 'description': 'Instrumentlar'},
         {'name': 'broadcast', 'description': 'Xabarlar'},
@@ -261,9 +245,11 @@ SPECTACULAR_SETTINGS = {
 
 # Telegram Bot settings
 BOT_TOKEN = os.getenv('BOT_TOKEN')
-CHANNEL_ID = os.getenv('CHANNEL_ID')
-WEB_APP_URL = os.getenv('WEB_APP_URL')
+CHANNEL_ID = int(os.getenv('CHANNEL_ID'))
+WEB_APP_URL = os.getenv('WEB_APP_URL', 'http://localhost:3000')
 
 h256 = 'HS256'
 SECRET_KEY = 'dyfhdsxrgdfxgju6y7i8xsokrsGJkgiqegruwy7f'
+
+
 

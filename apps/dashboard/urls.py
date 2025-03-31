@@ -7,10 +7,12 @@ app_name = 'dashboard'
 # API Router
 router = DefaultRouter()
 
-# Statistics endpoints
-router.register('staatsts/users', views.UserStatsViewSet, basename='user-stats')
-router.register('st/payments', views.PaymentStatsViewSet, basename='payment-stats') 
-router.register('stats/subscriptions', views.SubscriptionStatsViewSet, basename='subscription-stats')
+# Main endpoints
+router.register('users', views.UserViewSet, basename='users')
+router.register('signals', views.SignalViewSet, basename='signals')
+router.register('subscriptions', views.SubscriptionViewSet, basename='subscriptions')
+router.register('reviews', views.ReviewViewSet, basename='reviews')
+router.register('instruments', views.InstrumentViewSet, basename='instruments')
 
 # Broadcast endpoints
 router.register('broadcast', views.BroadcastViewSet, basename='broadcast')

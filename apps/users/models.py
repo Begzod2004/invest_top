@@ -91,32 +91,24 @@ class User(AbstractUser):
         verbose_name = 'Foydalanuvchi'
         verbose_name_plural = 'Foydalanuvchilar'
         permissions = [
-            # Foydalanuvchilar uchun ruxsatlar
             ("can_view_users", "Can view users"),
             ("can_edit_users", "Can edit users"),
+            ("can_delete_users", "Can delete users"),
             ("can_block_users", "Can block users"),
             
-            # Signallar uchun ruxsatlar
             ("can_view_signals", "Can view signals"),
             ("can_create_signals", "Can create signals"),
             ("can_edit_signals", "Can edit signals"),
             ("can_delete_signals", "Can delete signals"),
             
-            # To'lovlar uchun ruxsatlar
-            ("can_view_payments", "Can view payments"),
-            ("can_approve_payments", "Can approve payments"),
-            ("can_reject_payments", "Can reject payments"),
-            
-            # Obunalar uchun ruxsatlar
             ("can_view_subscriptions", "Can view subscriptions"),
             ("can_manage_subscriptions", "Can manage subscriptions"),
             
-            # Sharhlar uchun ruxsatlar
             ("can_view_reviews", "Can view reviews"),
             ("can_manage_reviews", "Can manage reviews"),
             
-            # Xabarlar uchun ruxsatlar
             ("can_send_broadcasts", "Can send broadcast messages"),
+            ("can_manage_instruments", "Can manage instruments"),
         ]
 
     @property

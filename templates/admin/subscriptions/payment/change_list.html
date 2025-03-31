@@ -1,0 +1,105 @@
+{% extends "admin/change_list.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<script src="{% static 'admin/js/payment_actions.js' %}"></script>
+<style>
+    .payment-screenshot {
+        max-width: 100px;
+        max-height: 100px;
+        cursor: pointer;
+    }
+    
+    .payment-screenshot:hover {
+        transform: scale(1.1);
+        transition: transform 0.2s;
+    }
+    
+    .action-button {
+        padding: 5px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        border: none;
+        color: white;
+        font-weight: bold;
+    }
+    
+    .approve-button {
+        background-color: #28a745;
+    }
+    
+    .approve-button:hover {
+        background-color: #218838;
+    }
+    
+    .reject-button {
+        background-color: #dc3545;
+    }
+    
+    .reject-button:hover {
+        background-color: #c82333;
+    }
+    
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.9);
+    }
+    
+    .modal-content {
+        margin: auto;
+        display: block;
+        max-width: 90%;
+        max-height: 90%;
+    }
+    
+    .close {
+        position: absolute;
+        right: 35px;
+        top: 15px;
+        color: #f1f1f1;
+        font-size: 40px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="imageModal" class="modal">
+    <span class="close">&times;</span>
+    <img class="modal-content" id="modalImage">
+</div>
+
+{{ block.super }}
+
+<script>
+    // Modal functionality for screenshot preview
+    const modal = document.getElementById("imageModal");
+    const modalImg = document.getElementById("modalImage");
+    const span = document.getElementsByClassName("close")[0];
+    
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('payment-screenshot')) {
+            modal.style.display = "block";
+            modalImg.src = e.target.src;
+        }
+    });
+    
+    span.onclick = function() {
+        modal.style.display = "none";
+    }
+    
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+</script>
+{% endblock %} 
